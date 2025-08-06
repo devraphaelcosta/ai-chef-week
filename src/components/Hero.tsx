@@ -41,7 +41,10 @@ const Hero = () => {
           
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button className="bg-gradient-primary hover:shadow-glow transition-all duration-300 px-8 py-6 text-lg font-semibold transform hover:scale-105">
+            <Button 
+              onClick={() => window.location.href = '/questionario'}
+              className="bg-gradient-primary hover:shadow-glow transition-all duration-300 px-8 py-6 text-lg font-semibold transform hover:scale-105"
+            >
               <Brain className="w-5 h-5 mr-2" />
               Começar Questionário
             </Button>
