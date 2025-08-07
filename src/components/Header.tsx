@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Brain } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
-import weekfitLogo from "@/assets/weekfit-logo.png";
+import AuthModal from "./AuthModal";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
@@ -13,11 +16,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <img 
-              src={weekfitLogo} 
-              alt="WeekFit Logo" 
-              className="w-8 h-8 object-contain"
-            />
+            <Brain className="w-8 h-8 text-primary" />
             <span className="text-xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
               WeekFit
             </span>
@@ -39,9 +38,28 @@ const Header = () => {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
-            <Button variant="ghost" className="text-muted-foreground">
-              Entrar
-            </Button>
+            {user ? (
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => window.location.href = '/dashboard'}
+                  className="text-muted-foreground"
+                >
+                  Dashboard
+                </Button>
+                <Button variant="ghost" onClick={signOut} className="text-muted-foreground">
+                  Sair
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowAuthModal(true)}
+                className="text-muted-foreground"
+              >
+                Entrar
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -72,14 +90,34 @@ const Header = () => {
               </a>
               <div className="flex flex-col space-y-2 pt-4">
                 <ThemeToggle />
-                <Button variant="ghost">
-                  Entrar
-                </Button>
+                {user ? (
+                  <div className="space-y-2">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => window.location.href = '/dashboard'}
+                      className="w-full justify-start"
+                    >
+                      Dashboard
+                    </Button>
+                    <Button variant="ghost" onClick={signOut} className="w-full justify-start">
+                      Sair
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowAuthModal(true)}
+                    className="w-full justify-start"
+                  >
+                    Entrar
+                  </Button>
+                )}
               </div>
             </nav>
           </div>
         )}
       </div>
+      <AuthModal isOpen={showAuthModal} onOpenChange={setShowAuthModal} />
     </header>
   );
 };

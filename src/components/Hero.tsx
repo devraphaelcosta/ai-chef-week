@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Calendar, ShoppingCart, Brain } from "lucide-react";
 import heroImage from "@/assets/weekfit-hero.jpg";
-import weekfitLogo from "@/assets/weekfit-logo.png";
 
 const Hero = () => {
   return (
@@ -24,11 +23,7 @@ const Hero = () => {
           
           {/* Main heading */}
           <div className="flex items-center justify-center gap-6 mb-8">
-            <img 
-              src={weekfitLogo} 
-              alt="WeekFit Logo" 
-              className="w-20 h-20 md:w-32 md:h-32 object-contain"
-            />
+            <Brain className="w-20 h-20 md:w-32 md:h-32 text-primary" />
             <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-primary-glow to-accent bg-clip-text text-transparent leading-tight">
               WeekFit
             </h1>

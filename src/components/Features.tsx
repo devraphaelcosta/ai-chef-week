@@ -120,7 +120,10 @@ const Features = () => {
 
         {/* CTA */}
         <div className="text-center">
-          <Button className="bg-gradient-premium hover:shadow-glow transition-all duration-300 px-10 py-6 text-lg font-semibold transform hover:scale-105">
+          <Button 
+            onClick={() => window.location.href = '/questionario'}
+            className="bg-gradient-premium hover:shadow-glow transition-all duration-300 px-10 py-6 text-lg font-semibold transform hover:scale-105"
+          >
             <Target className="w-5 h-5 mr-2" />
             Criar Meu Cardápio Agora
           </Button>
