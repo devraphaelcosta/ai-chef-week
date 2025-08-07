@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Brain, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import ThemeToggle from "./ThemeToggle";
+import weekfitLogo from "@/assets/weekfit-logo.png";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,10 +12,12 @@ const Header = () => {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Brain className="w-5 h-5 text-primary-foreground" />
-            </div>
+          <div className="flex items-center space-x-3">
+            <img 
+              src={weekfitLogo} 
+              alt="WeekFit Logo" 
+              className="w-8 h-8 object-contain"
+            />
             <span className="text-xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
               WeekFit
             </span>
@@ -34,11 +38,9 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center space-x-4">
+            <ThemeToggle />
             <Button variant="ghost" className="text-muted-foreground">
               Entrar
-            </Button>
-            <Button className="bg-gradient-primary hover:shadow-glow">
-              Começar Grátis
             </Button>
           </div>
 
@@ -69,11 +71,9 @@ const Header = () => {
                 Contato
               </a>
               <div className="flex flex-col space-y-2 pt-4">
+                <ThemeToggle />
                 <Button variant="ghost">
                   Entrar
-                </Button>
-                <Button className="bg-gradient-primary">
-                  Começar Grátis
                 </Button>
               </div>
             </nav>

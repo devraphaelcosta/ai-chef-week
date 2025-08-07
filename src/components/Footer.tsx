@@ -1,4 +1,6 @@
-import { Brain, Mail, Phone, MapPin, Instagram, Youtube, Linkedin } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Youtube, Linkedin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import weekfitLogo from "@/assets/weekfit-logo.png";
 
 const Footer = () => {
   return (
@@ -7,10 +9,12 @@ const Footer = () => {
         <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <Brain className="w-5 h-5 text-primary-foreground" />
-              </div>
+            <div className="flex items-center space-x-3">
+              <img 
+                src={weekfitLogo} 
+                alt="WeekFit Logo" 
+                className="w-8 h-8 object-contain"
+              />
               <span className="text-xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
                 WeekFit
               </span>
@@ -75,7 +79,24 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border/50 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+        {/* CTA Section */}
+        <div className="text-center py-12 border-t border-border/50">
+          <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+            Pronto para transformar sua alimentação?
+          </h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Comece agora e receba seu cardápio personalizado em minutos
+          </p>
+          <Button 
+            size="lg" 
+            className="bg-gradient-primary hover:shadow-glow px-8 py-3 text-lg font-semibold"
+            onClick={() => window.location.href = '/questionario'}
+          >
+            Criar Meu Cardápio Agora
+          </Button>
+        </div>
+
+        <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">
             © 2024 WeekFit. Todos os direitos reservados.
           </p>

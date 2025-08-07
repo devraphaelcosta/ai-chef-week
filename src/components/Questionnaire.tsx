@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Target, 
   Clock, 
@@ -12,7 +13,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Sparkles,
-  CheckCircle
+  CheckCircle,
+  Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,6 +26,13 @@ interface QuestionnaireData {
   experiencia: string;
   preferencias: string[];
   refeicoes: string[];
+  evento: string;
+  guloseimas: string;
+  aniversario: {
+    dia: string;
+    mes: string;
+    ano: string;
+  };
 }
 
 const Questionnaire = () => {
@@ -35,7 +44,14 @@ const Questionnaire = () => {
     tempo: "",
     experiencia: "",
     preferencias: [],
-    refeicoes: []
+    refeicoes: [],
+    evento: "",
+    guloseimas: "",
+    aniversario: {
+      dia: "",
+      mes: "",
+      ano: ""
+    }
   });
   const { toast } = useToast();
 
@@ -134,6 +150,44 @@ const Questionnaire = () => {
         { value: "jantar", label: "Jantar", desc: "" },
         { value: "ceia", label: "Ceia", desc: "" }
       ]
+    },
+    {
+      id: "evento",
+      title: "Há algum evento específico que te motiva a perder peso agora?",
+      subtitle: "Vamos focar no seu objetivo",
+      icon: <Target className="w-6 h-6" />,
+      type: "single",
+      options: [
+        { value: "ferias", label: "Férias", desc: "" },
+        { value: "casamento", label: "Casamento", desc: "" },
+        { value: "evento_esportivo", label: "Evento esportivo", desc: "" },
+        { value: "verao", label: "Verão", desc: "" },
+        { value: "reuniao_familia", label: "Reunião de família", desc: "" },
+        { value: "festa_aniversario", label: "Festa de aniversário", desc: "" },
+        { value: "outra_ocasiao", label: "Outra ocasião", desc: "" }
+      ]
+    },
+    {
+      id: "guloseimas",
+      title: "Você mais sente desejo por guloseimas? se sim quando?",
+      subtitle: "Vamos adequar o cardápio aos seus hábitos",
+      icon: <Heart className="w-6 h-6" />,
+      type: "single",
+      options: [
+        { value: "nao_sinto", label: "Não sinto", desc: "" },
+        { value: "manha", label: "Sim, pela manhã", desc: "" },
+        { value: "tarde", label: "Sim, pela tarde", desc: "" },
+        { value: "noite", label: "Sim, pela noite", desc: "" },
+        { value: "madrugada", label: "Sim, pela madrugada", desc: "" }
+      ]
+    },
+    {
+      id: "aniversario",
+      title: "Quando é seu aniversário?",
+      subtitle: "Precisamos da sua idade para calcular seu objetivo calórico diário com exatidão",
+      icon: <Clock className="w-6 h-6" />,
+      type: "date",
+      options: []
     }
   ];
 
@@ -161,12 +215,28 @@ const Questionnaire = () => {
     }
   };
 
+  const handleDateSelect = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      aniversario: {
+        ...prev.aniversario,
+        [field]: value
+      }
+    }));
+  };
+
   const canProceed = () => {
+    if (currentQuestion.id === "aniversario") {
+      return formData.aniversario.dia !== "" && formData.aniversario.mes !== "" && formData.aniversario.ano !== "";
+    }
+    
     const currentValue = formData[currentQuestion.id as keyof QuestionnaireData];
     if (currentQuestion.type === "single") {
       return currentValue !== "";
-    } else {
+    } else if (currentQuestion.type === "multiple") {
       return Array.isArray(currentValue) && currentValue.length > 0;
+    } else {
+      return true;
     }
   };
 
@@ -239,31 +309,84 @@ const Questionnaire = () => {
           </div>
 
           {/* Options */}
-          <div className="grid md:grid-cols-2 gap-4 mb-8">
-            {currentQuestion.options.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleOptionSelect(currentQuestion.id, option.value)}
-                className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                  isSelected(option.value)
-                    ? "border-primary bg-primary/10 shadow-glow"
-                    : "border-border/50 hover:border-primary/50 bg-background/50"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold mb-1">{option.label}</h3>
-                    {option.desc && (
-                      <p className="text-sm text-muted-foreground">{option.desc}</p>
+          {currentQuestion.type === "date" ? (
+            <div className="grid md:grid-cols-3 gap-4 mb-8">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Dia</label>
+                <Select onValueChange={(value) => handleDateSelect("dia", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Dia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 31 }, (_, i) => (
+                      <SelectItem key={i + 1} value={(i + 1).toString()}>
+                        {i + 1}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Mês</label>
+                <Select onValueChange={(value) => handleDateSelect("mes", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[
+                      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+                    ].map((mes, index) => (
+                      <SelectItem key={index + 1} value={(index + 1).toString()}>
+                        {mes}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Ano</label>
+                <Select onValueChange={(value) => handleDateSelect("ano", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 80 }, (_, i) => (
+                      <SelectItem key={2024 - i} value={(2024 - i).toString()}>
+                        {2024 - i}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4 mb-8">
+              {currentQuestion.options.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleOptionSelect(currentQuestion.id, option.value)}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                    isSelected(option.value)
+                      ? "border-primary bg-primary/10 shadow-glow"
+                      : "border-border/50 hover:border-primary/50 bg-background/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold mb-1">{option.label}</h3>
+                      {option.desc && (
+                        <p className="text-sm text-muted-foreground">{option.desc}</p>
+                      )}
+                    </div>
+                    {isSelected(option.value) && (
+                      <CheckCircle className="w-5 h-5 text-primary" />
                     )}
                   </div>
-                  {isSelected(option.value) && (
-                    <CheckCircle className="w-5 h-5 text-primary" />
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Navigation */}
           <div className="flex justify-between items-center">
