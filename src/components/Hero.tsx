@@ -7,12 +7,8 @@ const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-secondary/20" />
       
-      {/* Floating orbs */}
-      <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
-      
+      <div className="pt-[80px]"> {/* tamanho do header */}
       <div className="container relative z-10 mx-auto px-6 text-center">
         <div className="max-w-4xl mx-auto">
           {/* Badge */}
@@ -23,17 +19,17 @@ const Hero = () => {
           
           {/* Main heading */}
           <div className="flex items-center justify-center gap-6 mb-8">
-            <Brain className="w-20 h-20 md:w-32 md:h-32 text-primary" />
-            <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-foreground via-primary-glow to-accent bg-clip-text text-transparent leading-tight">
-              WeekFit
-            </h1>
+            {/*<Brain className="w-20 h-20 md:w-32 md:h-32 text-primary" />*/}
+           <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-[hsl(var(--brand-heading))] via-primary-glow to-accent bg-clip-text text-transparent leading-tight">
+          WeekFit
+          </h1>
           </div>
           
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
             <span className="text-accent font-semibold">🍽️ Cardápio da Semana</span> + 
-            <span className="text-primary-glow font-semibold"> Lista de Compras</span> + 
-            <span className="text-accent font-semibold"> Receitas</span>
+            <span className="text-primary-glow font-semibold">🗒️ Lista de Compras</span> + 
+            <span className="text-accent font-semibold">🥣 Receitas</span>
           </p>
           
           {/* Description */}
@@ -57,7 +53,7 @@ const Hero = () => {
           </div>
           
           {/* Features grid */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-9">
             <div className="bg-gradient-card p-6 rounded-2xl border border-border/50 shadow-card backdrop-blur-sm">
               <Calendar className="w-8 h-8 text-primary mb-4 mx-auto" />
               <h3 className="text-lg font-semibold mb-2">Cardápio Inteligente</h3>
@@ -78,15 +74,9 @@ const Hero = () => {
           </div>
         </div>
       </div>
-      
-      {/* Hero image overlay */}
-      <div className="absolute inset-0 opacity-10">
-        <img 
-          src={heroImage} 
-          alt="WeekFit AI" 
-          className="w-full h-full object-cover"
-        />
+
       </div>
+      
     </section>
   );
 };

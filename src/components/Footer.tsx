@@ -80,21 +80,23 @@ const Footer = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center py-12 border-t border-border/50">
-          <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-            Pronto para transformar sua alimentação?
-          </h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Comece agora e receba seu cardápio personalizado em minutos
-          </p>
-          <Button 
-            size="lg" 
-            className="bg-gradient-primary hover:shadow-glow px-8 py-3 text-lg font-semibold"
-            onClick={() => window.location.href = '/questionario'}
-          >
-            Criar Meu Cardápio Agora
-          </Button>
-        </div>
+{/* 
+<div className="text-center py-12 border-t border-border/50">
+  <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+    Pronto para transformar sua alimentação?
+  </h3>
+  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+    Comece agora e receba seu cardápio personalizado em minutos
+  </p>
+  <Button 
+    size="lg" 
+    className="bg-gradient-primary hover:shadow-glow px-8 py-3 text-lg font-semibold"
+    onClick={() => window.location.href = '/questionario'}
+  >
+    Criar Meu Cardápio Agora
+  </Button>
+</div>
+*/}
 
         <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">

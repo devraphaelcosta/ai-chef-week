@@ -16,7 +16,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <Brain className="w-8 h-8 text-primary" />
+           {/* <Brain className="w-8 h-8 text-primary" />*/}
             <span className="text-xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
               WeekFit
             </span>
