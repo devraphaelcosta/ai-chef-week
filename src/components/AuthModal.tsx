@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ interface AuthModalProps {
 }
 
 const AuthModal = ({ isOpen, onOpenChange }: AuthModalProps) => {
+  const navigate = useNavigate();
   const { signInWithEmail, signUpWithEmail, signInWithGoogle, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,16 +25,19 @@ const AuthModal = ({ isOpen, onOpenChange }: AuthModalProps) => {
     e.preventDefault();
     await signInWithEmail(email, password);
     onOpenChange(false);
+    navigate('/dashboard');
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     await signUpWithEmail(email, password, fullName);
     onOpenChange(false);
+    navigate('/dashboard');
   };
 
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
+    onOpenChange(false);
   };
 
   return (

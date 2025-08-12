@@ -21,11 +21,6 @@ export const useAuth = () => {
         setLoading(false)
 
         if (event === 'SIGNED_IN' && session?.user) {
-          // Redirect to dashboard after successful login
-          setTimeout(() => {
-            window.location.href = '/dashboard'
-          }, 1000)
-          
           toast({
             title: "Login realizado com sucesso!",
             description: "Bem-vindo ao WeekFit 🎉"
