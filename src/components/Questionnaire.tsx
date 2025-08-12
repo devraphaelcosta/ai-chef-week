@@ -17,6 +17,9 @@ import {
   Calendar
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import AuthModal from "./AuthModal";
+import { supabase } from "@/lib/supabase";
 
 interface QuestionnaireData {
   objetivo: string;
@@ -37,6 +40,7 @@ interface QuestionnaireData {
 
 const Questionnaire = () => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [formData, setFormData] = useState<QuestionnaireData>({
     objetivo: "",
     restricoes: [],
@@ -54,6 +58,7 @@ const Questionnaire = () => {
     }
   });
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const questions = [
     {
@@ -244,6 +249,16 @@ const Questionnaire = () => {
     if (currentStep < questions.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
+      // Verificar se usuário está logado antes de gerar cardápio
+      if (!user) {
+        setShowAuthModal(true);
+        toast({
+          title: "Faça login para continuar",
+          description: "Você precisa criar uma conta para gerar seu cardápio personalizado!",
+          variant: "destructive"
+        });
+        return;
+      }
       // Questionário finalizado
       generateMenu();
     }
@@ -255,14 +270,35 @@ const Questionnaire = () => {
     }
   };
 
-  const generateMenu = () => {
-    toast({
-      title: "🎉 Questionário Concluído!",
-      description: "Sua IA está criando o cardápio perfeito... Em breve você receberá por email!",
-    });
-    
-    // Aqui conectaria com a API para gerar o cardápio
-    console.log("Dados do questionário:", formData);
+  const generateMenu = async () => {
+    try {
+      toast({
+        title: "🎉 Questionário Concluído!",
+        description: "Sua IA está criando o cardápio perfeito...",
+      });
+      
+      // Salvar preferências do usuário no Supabase
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          preferences: formData 
+        })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      // Redirecionar para o dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 2000);
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar preferências",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const isSelected = (value: string) => {
@@ -415,6 +451,8 @@ const Questionnaire = () => {
           </div>
         </Card>
       </div>
+      
+      <AuthModal isOpen={showAuthModal} onOpenChange={setShowAuthModal} />
     </div>
   );
 };

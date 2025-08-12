@@ -20,7 +20,12 @@ export const useAuth = () => {
         setUser(session?.user ?? null)
         setLoading(false)
 
-        if (event === 'SIGNED_IN') {
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Redirect to dashboard after successful login
+          setTimeout(() => {
+            window.location.href = '/dashboard'
+          }, 1000)
+          
           toast({
             title: "Login realizado com sucesso!",
             description: "Bem-vindo ao WeekFit 🎉"
@@ -54,7 +59,7 @@ export const useAuth = () => {
   const signUpWithEmail = async (email: string, password: string, fullName: string) => {
     try {
       setLoading(true)
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -64,6 +69,26 @@ export const useAuth = () => {
         }
       })
       if (error) throw error
+      
+      // Create profile in database after successful signup
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: data.user.email!,
+            full_name: fullName,
+            level: 'Bronze',
+            points: 0,
+            current_streak: 0,
+            max_streak: 0,
+            preferences: {}
+          })
+        
+        if (profileError) {
+          console.error('Error creating profile:', profileError)
+        }
+      }
       
       toast({
         title: "Conta criada!",

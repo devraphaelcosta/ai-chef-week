@@ -22,13 +22,13 @@ const AuthModal = ({ isOpen, onOpenChange }: AuthModalProps) => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     await signInWithEmail(email, password);
-    if (!loading) onOpenChange(false);
+    onOpenChange(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     await signUpWithEmail(email, password, fullName);
-    if (!loading) onOpenChange(false);
+    onOpenChange(false);
   };
 
   const handleGoogleSignIn = async () => {
