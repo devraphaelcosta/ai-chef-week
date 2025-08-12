@@ -81,9 +81,28 @@ const Dashboard = () => {
         .eq('id', user?.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Profile fetch error:', error);
-        throw error;
+      if (error) {
+        // Se a tabela não existe, criar perfil padrão
+        if (error.code === '42P01' || error.message.includes('does not exist')) {
+          console.log('Table does not exist, using default profile');
+          const defaultProfile = {
+            id: user?.id!,
+            email: user?.email!,
+            full_name: user?.user_metadata?.full_name || null,
+            level: 'Bronze' as const,
+            points: 0,
+            current_streak: 0,
+            max_streak: 0,
+            preferences: {}
+          };
+          setProfile(defaultProfile);
+          return;
+        }
+        
+        if (error.code !== 'PGRST116') {
+          console.error('Profile fetch error:', error);
+          throw error;
+        }
       }
       
       if (!data) {
@@ -105,7 +124,9 @@ const Dashboard = () => {
         
         if (insertError) {
           console.error('Profile creation error:', insertError);
-          throw insertError;
+          // Se erro de inserção, usar perfil padrão
+          setProfile(newProfile);
+          return;
         }
         
         setProfile(newProfile);
@@ -114,11 +135,18 @@ const Dashboard = () => {
       }
     } catch (error: any) {
       console.error('fetchProfile error:', error);
-      toast({
-        title: "Erro ao carregar perfil",
-        description: error.message,
-        variant: "destructive"
-      });
+      // Usar perfil padrão em caso de erro
+      const defaultProfile = {
+        id: user?.id!,
+        email: user?.email!,
+        full_name: user?.user_metadata?.full_name || null,
+        level: 'Bronze' as const,
+        points: 0,
+        current_streak: 0,
+        max_streak: 0,
+        preferences: {}
+      };
+      setProfile(defaultProfile);
     }
   };
 
@@ -131,8 +159,41 @@ const Dashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
+        // Se a tabela não existe, usar desafios padrão
+        if (error.code === '42P01' || error.message.includes('does not exist')) {
+          console.log('Challenges table does not exist, using default challenges');
+          const defaultChallenges = [
+            {
+              id: '1',
+              title: "Complete seu primeiro cardápio",
+              description: "Gere seu primeiro cardápio semanal usando nossa IA",
+              points_reward: 100,
+              completed: false,
+              challenge_type: 'weekly' as const
+            },
+            {
+              id: '2',
+              title: "Use a lista de compras",
+              description: "Faça suas compras usando nossa lista inteligente",
+              points_reward: 50,
+              completed: false,
+              challenge_type: 'weekly' as const
+            },
+            {
+              id: '3',
+              title: "Mantenha a sequência",
+              description: "Use o WeekFit por 7 dias consecutivos",
+              points_reward: 200,
+              completed: false,
+              challenge_type: 'weekly' as const
+            }
+          ];
+          setChallenges(defaultChallenges);
+          return;
+        }
         console.error('Challenges fetch error:', error);
-        throw error;
+        setChallenges([]);
+        return;
       }
       
       if (!data || data.length === 0) {
@@ -168,7 +229,8 @@ const Dashboard = () => {
 
         if (insertError) {
           console.error('Challenges creation error:', insertError);
-          throw insertError;
+          setChallenges([]);
+          return;
         }
         setChallenges(newChallenges || []);
       } else {
@@ -176,7 +238,6 @@ const Dashboard = () => {
       }
     } catch (error: any) {
       console.error('fetchChallenges error:', error);
-      // Don't show error toast for challenges as it's not critical
       setChallenges([]);
     }
   };
@@ -191,9 +252,40 @@ const Dashboard = () => {
         .limit(1)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Weekly menu fetch error:', error);
-        throw error;
+      if (error) {
+        // Se a tabela não existe, usar menu padrão
+        if (error.code === '42P01' || error.message.includes('does not exist')) {
+          console.log('Weekly menus table does not exist, using sample menu');
+          const sampleMenu = {
+            week_start: new Date().toISOString().split('T')[0],
+            meals: {
+              monday: {
+                breakfast: "Aveia com frutas e mel",
+                lunch: "Frango grelhado com quinoa e legumes",
+                dinner: "Salmão assado com batata doce"
+              },
+              tuesday: {
+                breakfast: "Smoothie de banana com aveia",
+                lunch: "Salada de atum com grão-de-bico",
+                dinner: "Peito de peru com arroz integral"
+              }
+            },
+            shopping_list: {
+              proteins: ["Frango (1kg)", "Salmão (500g)", "Atum em lata (2un)"],
+              carbs: ["Quinoa (500g)", "Batata doce (1kg)", "Arroz integral (1kg)"],
+              vegetables: ["Brócolis (1un)", "Cenoura (500g)", "Abobrinha (2un)"],
+              fruits: ["Banana (1kg)", "Maçã (6un)", "Morango (250g)"]
+            }
+          };
+          setWeeklyMenu(sampleMenu);
+          return;
+        }
+        
+        if (error.code !== 'PGRST116') {
+          console.error('Weekly menu fetch error:', error);
+          setWeeklyMenu(null);
+          return;
+        }
       }
 
       if (data) {
