@@ -50,11 +50,28 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user) {
-      fetchProfile();
-      fetchChallenges();
-      fetchWeeklyMenu();
+      initializeUser();
     }
   }, [user]);
+
+  const initializeUser = async () => {
+    try {
+      await Promise.all([
+        fetchProfile(),
+        fetchChallenges(),
+        fetchWeeklyMenu()
+      ]);
+    } catch (error: any) {
+      console.error('Error initializing user data:', error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Tente recarregar a página",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -62,38 +79,41 @@ const Dashboard = () => {
         .from('profiles')
         .select('*')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('Profile fetch error:', error);
+        throw error;
+      }
       
       if (!data) {
-        // Create profile if doesn't exist
+        console.log('Creating new profile for user:', user?.id);
+        const newProfile = {
+          id: user?.id!,
+          email: user?.email!,
+          full_name: user?.user_metadata?.full_name || null,
+          level: 'Bronze' as const,
+          points: 0,
+          current_streak: 0,
+          max_streak: 0,
+          preferences: {}
+        };
+
         const { error: insertError } = await supabase
           .from('profiles')
-          .insert({
-            id: user?.id!,
-            email: user?.email!,
-            full_name: user?.user_metadata?.full_name,
-            level: 'Bronze',
-            points: 0,
-            current_streak: 0,
-            max_streak: 0
-          });
+          .insert(newProfile);
         
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Profile creation error:', insertError);
+          throw insertError;
+        }
         
-        // Fetch again after creation
-        const { data: newData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user?.id)
-          .single();
-        
-        setProfile(newData);
+        setProfile(newProfile);
       } else {
         setProfile(data);
       }
     } catch (error: any) {
+      console.error('fetchProfile error:', error);
       toast({
         title: "Erro ao carregar perfil",
         description: error.message,
@@ -110,10 +130,13 @@ const Dashboard = () => {
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Challenges fetch error:', error);
+        throw error;
+      }
       
       if (!data || data.length === 0) {
-        // Create default challenges
+        console.log('Creating default challenges for user:', user?.id);
         const defaultChallenges = [
           {
             user_id: user?.id!,
@@ -143,53 +166,66 @@ const Dashboard = () => {
           .insert(defaultChallenges)
           .select();
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Challenges creation error:', insertError);
+          throw insertError;
+        }
         setChallenges(newChallenges || []);
       } else {
         setChallenges(data);
       }
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar desafios",
-        description: error.message,
-        variant: "destructive"
-      });
+      console.error('fetchChallenges error:', error);
+      // Don't show error toast for challenges as it's not critical
+      setChallenges([]);
     }
   };
 
   const fetchWeeklyMenu = async () => {
     try {
-      setLoading(false);
-      // Simulate AI-generated menu
-      const sampleMenu = {
-        week_start: new Date().toISOString().split('T')[0],
-        meals: {
-          monday: {
-            breakfast: "Aveia com frutas e mel",
-            lunch: "Frango grelhado com quinoa e legumes",
-            dinner: "Salmão assado com batata doce"
+      const { data, error } = await supabase
+        .from('weekly_menus')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Weekly menu fetch error:', error);
+        throw error;
+      }
+
+      if (data) {
+        setWeeklyMenu(data);
+      } else {
+        // Simulate AI-generated menu for demo
+        const sampleMenu = {
+          week_start: new Date().toISOString().split('T')[0],
+          meals: {
+            monday: {
+              breakfast: "Aveia com frutas e mel",
+              lunch: "Frango grelhado com quinoa e legumes",
+              dinner: "Salmão assado com batata doce"
+            },
+            tuesday: {
+              breakfast: "Smoothie de banana com aveia",
+              lunch: "Salada de atum com grão-de-bico",
+              dinner: "Peito de peru com arroz integral"
+            }
           },
-          tuesday: {
-            breakfast: "Smoothie de banana com aveia",
-            lunch: "Salada de atum com grão-de-bico",
-            dinner: "Peito de peru com arroz integral"
-          },
-          // Add more days...
-        },
-        shopping_list: {
-          proteins: ["Frango (1kg)", "Salmão (500g)", "Atum em lata (2un)"],
-          carbs: ["Quinoa (500g)", "Batata doce (1kg)", "Arroz integral (1kg)"],
-          vegetables: ["Brócolis (1un)", "Cenoura (500g)", "Abobrinha (2un)"],
-          fruits: ["Banana (1kg)", "Maçã (6un)", "Morango (250g)"]
-        }
-      };
-      setWeeklyMenu(sampleMenu);
+          shopping_list: {
+            proteins: ["Frango (1kg)", "Salmão (500g)", "Atum em lata (2un)"],
+            carbs: ["Quinoa (500g)", "Batata doce (1kg)", "Arroz integral (1kg)"],
+            vegetables: ["Brócolis (1un)", "Cenoura (500g)", "Abobrinha (2un)"],
+            fruits: ["Banana (1kg)", "Maçã (6un)", "Morango (250g)"]
+          }
+        };
+        setWeeklyMenu(sampleMenu);
+      }
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar cardápio",
-        description: error.message,
-        variant: "destructive"
-      });
+      console.error('fetchWeeklyMenu error:', error);
+      setWeeklyMenu(null);
     }
   };
 
@@ -223,6 +259,7 @@ const Dashboard = () => {
       fetchChallenges();
       fetchProfile();
     } catch (error: any) {
+      console.error('completeChallenge error:', error);
       toast({
         title: "Erro ao completar desafio",
         description: error.message,
@@ -298,7 +335,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="w-20 h-20 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-3">
                   <User className="w-10 h-10 text-primary-foreground" />
                 </div>
                 <h3 className="font-semibold">{profile?.full_name || 'Usuário'}</h3>
