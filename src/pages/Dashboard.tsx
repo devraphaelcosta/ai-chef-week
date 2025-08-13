@@ -256,71 +256,100 @@ const Dashboard = () => {
         .maybeSingle();
 
       if (error) {
-        // Se a tabela não existe, usar menu padrão
-        if (error.code === '42P01' || error.message.includes('does not exist')) {
-          console.log('Weekly menus table does not exist, using sample menu');
-          const sampleMenu = {
+        // Se a tabela não existe ou não há dados, verificar localStorage
+        if (error.code === '42P01' || error.message.includes('does not exist') || !data) {
+          console.log('Checking localStorage for menu data...');
+          const localMenu = localStorage.getItem(`menu_${user?.id}`);
+          
+          if (localMenu) {
+            console.log('Found menu in localStorage');
+            const parsedMenu = JSON.parse(localMenu);
+            setWeeklyMenu({
+              week_start: new Date().toISOString().split('T')[0],
+              meals: parsedMenu.meals,
+              shopping_list: parsedMenu.shopping_list,
+              ai_preferences: JSON.parse(localStorage.getItem(`preferences_${user?.id}`) || '{}')
+            });
+            return;
+          }
+          
+          // Se não há dados salvos, mostrar menu de exemplo mais completo
+          console.log('No saved data found, using comprehensive sample menu');
+          const comprehensiveMenu = {
             week_start: new Date().toISOString().split('T')[0],
             meals: {
               monday: {
-                breakfast: "Aveia com frutas e mel",
-                lunch: "Frango grelhado com quinoa e legumes",
-                dinner: "Salmão assado com batata doce"
+                breakfast: "Aveia com frutas vermelhas e mel",
+                lunch: "Frango grelhado com quinoa e legumes refogados",
+                dinner: "Salmão assado com batata doce e aspargos"
               },
               tuesday: {
-                breakfast: "Smoothie de banana com aveia",
-                lunch: "Salada de atum com grão-de-bico",
-                dinner: "Peito de peru com arroz integral"
+                breakfast: "Smoothie de banana, aveia e leite de amêndoas",
+                lunch: "Salada de atum com grão-de-bico e vegetais",
+                dinner: "Peito de peru com arroz integral e brócolis"
+              },
+              wednesday: {
+                breakfast: "Iogurte natural com granola e frutas",
+                lunch: "Peixe grelhado com purê de batata doce",
+                dinner: "Omelete de legumes com salada verde"
+              },
+              thursday: {
+                breakfast: "Smoothie verde com espinafre, banana e aveia",
+                lunch: "Carne magra com salada de quinoa",
+                dinner: "Frango assado com batatas e cenouras"
+              },
+              friday: {
+                breakfast: "Panqueca de aveia com frutas",
+                lunch: "Wrap de frango com vegetais",
+                dinner: "Peixe com arroz integral e legumes no vapor"
+              },
+              saturday: {
+                breakfast: "Vitamina de frutas com granola",
+                lunch: "Hambúrguer de frango com salada",
+                dinner: "Sopa de legumes com proteína"
+              },
+              sunday: {
+                breakfast: "Torradas integrais com abacate",
+                lunch: "Salada completa com proteína",
+                dinner: "Jantar leve com sopa e sanduíche natural"
               }
             },
             shopping_list: {
-              proteins: ["Frango (1kg)", "Salmão (500g)", "Atum em lata (2un)"],
-              carbs: ["Quinoa (500g)", "Batata doce (1kg)", "Arroz integral (1kg)"],
-              vegetables: ["Brócolis (1un)", "Cenoura (500g)", "Abobrinha (2un)"],
-              fruits: ["Banana (1kg)", "Maçã (6un)", "Morango (250g)"]
-            }
+              proteins: ["Frango (1,5kg)", "Salmão (800g)", "Atum em lata (3un)", "Ovos (12un)", "Peito de peru (500g)"],
+              carbs: ["Quinoa (500g)", "Batata doce (1,5kg)", "Arroz integral (1kg)", "Aveia (500g)", "Pão integral (1un)"],
+              vegetables: ["Brócolis (2un)", "Cenoura (1kg)", "Abobrinha (3un)", "Espinafre (2 maços)", "Tomate (1kg)", "Cebola (5un)", "Aspargos (1 maço)"],
+              fruits: ["Banana (1,5kg)", "Maçã (8un)", "Frutas vermelhas (500g)", "Abacate (3un)", "Limão (6un)"],
+              dairy: ["Iogurte natural (1L)", "Leite de amêndoas (1L)", "Queijo (300g)"],
+              others: ["Azeite de oliva", "Mel", "Granola", "Temperos diversos", "Grão-de-bico (lata)"]
+            },
+            ai_preferences: {}
           };
-          setWeeklyMenu(sampleMenu);
+          setWeeklyMenu(comprehensiveMenu);
           return;
         }
-        
-        if (error.code !== 'PGRST116') {
-          console.error('Weekly menu fetch error:', error);
-          setWeeklyMenu(null);
-          return;
-        }
+        console.error('Weekly menu fetch error:', error);
+        return;
       }
 
       if (data) {
         setWeeklyMenu(data);
-      } else {
-        // Simulate AI-generated menu for demo
-        const sampleMenu = {
-          week_start: new Date().toISOString().split('T')[0],
-          meals: {
-            monday: {
-              breakfast: "Aveia com frutas e mel",
-              lunch: "Frango grelhado com quinoa e legumes",
-              dinner: "Salmão assado com batata doce"
-            },
-            tuesday: {
-              breakfast: "Smoothie de banana com aveia",
-              lunch: "Salada de atum com grão-de-bico",
-              dinner: "Peito de peru com arroz integral"
-            }
-          },
-          shopping_list: {
-            proteins: ["Frango (1kg)", "Salmão (500g)", "Atum em lata (2un)"],
-            carbs: ["Quinoa (500g)", "Batata doce (1kg)", "Arroz integral (1kg)"],
-            vegetables: ["Brócolis (1un)", "Cenoura (500g)", "Abobrinha (2un)"],
-            fruits: ["Banana (1kg)", "Maçã (6un)", "Morango (250g)"]
-          }
-        };
-        setWeeklyMenu(sampleMenu);
       }
     } catch (error: any) {
       console.error('fetchWeeklyMenu error:', error);
-      setWeeklyMenu(null);
+      // Fallback menu em caso de qualquer erro
+      setWeeklyMenu({
+        week_start: new Date().toISOString().split('T')[0],
+        meals: {
+          monday: { breakfast: "Aveia com frutas", lunch: "Frango com salada", dinner: "Salmão grelhado" },
+          tuesday: { breakfast: "Smoothie proteico", lunch: "Salada completa", dinner: "Omelete de legumes" }
+        },
+        shopping_list: {
+          proteins: ["Frango (1kg)", "Salmão (500g)", "Ovos (12un)"],
+          carbs: ["Aveia (500g)", "Arroz integral (1kg)"],
+          vegetables: ["Brócolis (1un)", "Cenoura (500g)"],
+          fruits: ["Banana (1kg)", "Maçã (6un)"]
+        }
+      });
     }
   };
 

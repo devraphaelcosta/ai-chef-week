@@ -277,32 +277,50 @@ const Questionnaire = () => {
         description: "Sua IA está criando o cardápio perfeito...",
       });
       
-      // Try to save user preferences to Supabase
+      // Generate personalized menu based on user preferences
+      const personalizedMenu = generatePersonalizedMenu(formData);
+      
+      // Try to save user preferences and menu to Supabase
       try {
-        const { error } = await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .update({ 
             preferences: formData 
           })
           .eq('id', user?.id);
 
-        if (error) {
-          // If table doesn't exist, just log it and continue
-          if (error.code === '42P01' || error.message.includes('does not exist')) {
-            console.log('Profiles table does not exist yet, preferences saved locally for now');
-            // Store preferences in localStorage as fallback
-            localStorage.setItem(`preferences_${user?.id}`, JSON.stringify(formData));
-          } else {
-            throw error;
-          }
-        } else {
-          console.log('Preferences saved successfully to database');
+        if (profileError && !(profileError.code === '42P01' || profileError.message.includes('does not exist'))) {
+          throw profileError;
         }
+
+        // Save the generated menu
+        const { error: menuError } = await supabase
+          .from('weekly_menus')
+          .insert({
+            user_id: user?.id!,
+            week_start: new Date().toISOString().split('T')[0],
+            meals: personalizedMenu.meals,
+            shopping_list: personalizedMenu.shopping_list,
+            ai_preferences: formData
+          });
+
+        if (menuError && !(menuError.code === '42P01' || menuError.message.includes('does not exist'))) {
+          throw menuError;
+        }
+
+        console.log('Menu and preferences saved successfully');
+        
       } catch (error: any) {
-        console.log('Could not save to database, using localStorage:', error.message);
-        // Store preferences in localStorage as fallback
+        console.log('Database not available, saving locally:', error.message);
+        // Store everything in localStorage as fallback
         localStorage.setItem(`preferences_${user?.id}`, JSON.stringify(formData));
+        localStorage.setItem(`menu_${user?.id}`, JSON.stringify(personalizedMenu));
       }
+
+      toast({
+        title: "Cardápio personalizado criado!",
+        description: "Redirecionando para o dashboard...",
+      });
 
       // Redirect to the dashboard
       setTimeout(() => {
@@ -321,6 +339,69 @@ const Questionnaire = () => {
         window.location.href = '/dashboard';
       }, 2000);
     }
+  };
+
+  // Function to generate personalized menu based on user preferences
+  const generatePersonalizedMenu = (preferences: QuestionnaireData) => {
+    const isVegetarian = preferences.restricoes?.includes('vegetariano');
+    const isVegan = preferences.restricoes?.includes('vegano');
+    const hasLactoseIntolerance = preferences.restricoes?.includes('lactose');
+    const hasGlutenIntolerance = preferences.restricoes?.includes('gluten');
+    
+    // Base meals that can be customized
+    let meals = {
+      monday: {
+        breakfast: isVegan ? "Smoothie de banana com leite de amêndoas e aveia" : "Aveia com frutas e mel",
+        lunch: isVegetarian ? "Quinoa com legumes grelhados e tofu" : "Frango grelhado com quinoa e legumes",
+        dinner: isVegan ? "Curry de grão-de-bico com arroz integral" : isVegetarian ? "Omelete de legumes com batata doce" : "Salmão assado com batata doce"
+      },
+      tuesday: {
+        breakfast: hasLactoseIntolerance ? "Smoothie de frutas com leite vegetal" : "Iogurte com granola e frutas",
+        lunch: isVegetarian ? "Salada de quinoa com grão-de-bico" : "Salada de atum com grão-de-bico",
+        dinner: isVegan ? "Refogado de tofu com legumes" : isVegetarian ? "Risoto de cogumelos" : "Peito de peru com arroz integral"
+      },
+      wednesday: {
+        breakfast: hasGlutenIntolerance ? "Vitamina de frutas com aveia sem glúten" : "Pão integral com abacate",
+        lunch: isVegetarian ? "Hambúrguer de lentilha com salada" : "Peixe grelhado com legumes",
+        dinner: isVegan ? "Macarrão de abobrinha com molho de tomate" : "Frango assado com batata"
+      },
+      thursday: {
+        breakfast: "Smoothie verde com espinafre e banana",
+        lunch: isVegetarian ? "Bowl de quinoa com legumes" : "Carne magra com salada",
+        dinner: isVegan ? "Sopa de lentilhas com legumes" : "Omelete com legumes"
+      },
+      friday: {
+        breakfast: hasLactoseIntolerance ? "Aveia com leite de coco" : "Vitamina de frutas com iogurte",
+        lunch: isVegetarian ? "Wrap de hummus com vegetais" : "Frango com batata doce",
+        dinner: isVegan ? "Stir-fry de tofu com legumes" : "Peixe com arroz integral"
+      },
+      saturday: {
+        breakfast: "Panqueca de aveia com frutas",
+        lunch: isVegetarian ? "Salada de quinoa e vegetais" : "Carne com legumes grelhados",
+        dinner: isVegan ? "Buddha bowl vegano" : "Frango grelhado com salada"
+      },
+      sunday: {
+        breakfast: hasGlutenIntolerance ? "Smoothie bowl sem glúten" : "Torrada integral com frutas",
+        lunch: isVegetarian ? "Curry de vegetais com arroz" : "Peixe com quinoa",
+        dinner: isVegan ? "Sopa de legumes com grão-de-bico" : "Omelete de legumes"
+      }
+    };
+
+    // Generate shopping list based on meals and dietary restrictions
+    let shopping_list = {
+      proteins: isVegan ? ["Tofu (500g)", "Grão-de-bico (500g)", "Lentilhas (500g)", "Quinoa (500g)"] 
+                : isVegetarian ? ["Ovos (12un)", "Tofu (500g)", "Grão-de-bico (500g)", "Quinoa (500g)"]
+                : ["Frango (1kg)", "Salmão (500g)", "Atum em lata (2un)", "Ovos (12un)"],
+      carbs: hasGlutenIntolerance ? ["Quinoa (500g)", "Arroz integral (1kg)", "Batata doce (1kg)", "Aveia sem glúten (500g)"]
+            : ["Quinoa (500g)", "Arroz integral (1kg)", "Batata doce (1kg)", "Pão integral (1un)"],
+      vegetables: ["Brócolis (1un)", "Cenoura (500g)", "Abobrinha (2un)", "Espinafre (1 maço)", "Tomate (500g)", "Cebola (3un)"],
+      fruits: ["Banana (1kg)", "Maçã (6un)", "Morango (250g)", "Abacate (2un)", "Limão (4un)"],
+      dairy: hasLactoseIntolerance || isVegan ? ["Leite de amêndoas (1L)", "Leite de coco (1L)"] 
+            : ["Iogurte natural (1L)", "Leite (1L)", "Queijo (200g)"],
+      others: ["Azeite de oliva", "Mel", "Temperos diversos", "Aveia (500g)"]
+    };
+
+    return { meals, shopping_list };
   };
 
   const isSelected = (value: string) => {
