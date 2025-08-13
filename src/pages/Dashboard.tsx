@@ -514,7 +514,7 @@ const Dashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {weeklyMenu ? (
+                     {weeklyMenu ? (
                       <div className="space-y-4">
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
@@ -531,6 +531,46 @@ const Dashboard = () => {
                               <p><strong>Café:</strong> {weeklyMenu.meals.tuesday.breakfast}</p>
                               <p><strong>Almoço:</strong> {weeklyMenu.meals.tuesday.lunch}</p>
                               <p><strong>Jantar:</strong> {weeklyMenu.meals.tuesday.dinner}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">Quarta-feira</h4>
+                            <div className="space-y-1 text-sm">
+                              <p><strong>Café:</strong> {weeklyMenu.meals.wednesday.breakfast}</p>
+                              <p><strong>Almoço:</strong> {weeklyMenu.meals.wednesday.lunch}</p>
+                              <p><strong>Jantar:</strong> {weeklyMenu.meals.wednesday.dinner}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">Quinta-feira</h4>
+                            <div className="space-y-1 text-sm">
+                              <p><strong>Café:</strong> {weeklyMenu.meals.thursday.breakfast}</p>
+                              <p><strong>Almoço:</strong> {weeklyMenu.meals.thursday.lunch}</p>
+                              <p><strong>Jantar:</strong> {weeklyMenu.meals.thursday.dinner}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">Sexta-feira</h4>
+                            <div className="space-y-1 text-sm">
+                              <p><strong>Café:</strong> {weeklyMenu.meals.friday.breakfast}</p>
+                              <p><strong>Almoço:</strong> {weeklyMenu.meals.friday.lunch}</p>
+                              <p><strong>Jantar:</strong> {weeklyMenu.meals.friday.dinner}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">Sábado</h4>
+                            <div className="space-y-1 text-sm">
+                              <p><strong>Café:</strong> {weeklyMenu.meals.saturday.breakfast}</p>
+                              <p><strong>Almoço:</strong> {weeklyMenu.meals.saturday.lunch}</p>
+                              <p><strong>Jantar:</strong> {weeklyMenu.meals.saturday.dinner}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-2">Domingo</h4>
+                            <div className="space-y-1 text-sm">
+                              <p><strong>Café:</strong> {weeklyMenu.meals.sunday.breakfast}</p>
+                              <p><strong>Almoço:</strong> {weeklyMenu.meals.sunday.lunch}</p>
+                              <p><strong>Jantar:</strong> {weeklyMenu.meals.sunday.dinner}</p>
                             </div>
                           </div>
                         </div>

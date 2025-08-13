@@ -362,28 +362,28 @@ const Questionnaire = () => {
       },
       wednesday: {
         breakfast: hasGlutenIntolerance ? "Vitamina de frutas com aveia sem glúten" : "Pão integral com abacate",
-        lunch: isVegetarian ? "Hambúrguer de lentilha com salada" : "Peixe grelhado com legumes",
-        dinner: isVegan ? "Macarrão de abobrinha com molho de tomate" : "Frango assado com batata"
+        lunch: isVegetarian || isVegan ? "Hambúrguer de lentilha com salada" : "Peixe grelhado com legumes",
+        dinner: isVegan ? "Macarrão de abobrinha com molho de tomate" : isVegetarian ? "Omelete de legumes com batata" : "Frango assado com batata"
       },
       thursday: {
         breakfast: "Smoothie verde com espinafre e banana",
-        lunch: isVegetarian ? "Bowl de quinoa com legumes" : "Carne magra com salada",
-        dinner: isVegan ? "Sopa de lentilhas com legumes" : "Omelete com legumes"
+        lunch: isVegetarian || isVegan ? "Bowl de quinoa com legumes" : "Carne magra com salada",
+        dinner: isVegan ? "Sopa de lentilhas com legumes" : isVegetarian ? "Omelete de legumes" : "Omelete com legumes"
       },
       friday: {
         breakfast: hasLactoseIntolerance ? "Aveia com leite de coco" : "Vitamina de frutas com iogurte",
-        lunch: isVegetarian ? "Wrap de hummus com vegetais" : "Frango com batata doce",
-        dinner: isVegan ? "Stir-fry de tofu com legumes" : "Peixe com arroz integral"
+        lunch: isVegetarian || isVegan ? "Wrap de hummus com vegetais" : "Frango com batata doce",
+        dinner: isVegan ? "Stir-fry de tofu com legumes" : isVegetarian ? "Peixe com arroz integral" : "Peixe com arroz integral"
       },
       saturday: {
         breakfast: "Panqueca de aveia com frutas",
-        lunch: isVegetarian ? "Salada de quinoa e vegetais" : "Carne com legumes grelhados",
-        dinner: isVegan ? "Buddha bowl vegano" : "Frango grelhado com salada"
+        lunch: isVegetarian || isVegan ? "Salada de quinoa e vegetais" : "Carne com legumes grelhados",
+        dinner: isVegan ? "Buddha bowl vegano" : isVegetarian ? "Frango grelhado com salada" : "Frango grelhado com salada"
       },
       sunday: {
         breakfast: hasGlutenIntolerance ? "Smoothie bowl sem glúten" : "Torrada integral com frutas",
-        lunch: isVegetarian ? "Curry de vegetais com arroz" : "Peixe com quinoa",
-        dinner: isVegan ? "Sopa de legumes com grão-de-bico" : "Omelete de legumes"
+        lunch: isVegetarian || isVegan ? "Curry de vegetais com arroz" : "Peixe com quinoa",
+        dinner: isVegan ? "Sopa de legumes com grão-de-bico" : isVegetarian ? "Omelete de legumes" : "Omelete de legumes"
       }
     };
 
