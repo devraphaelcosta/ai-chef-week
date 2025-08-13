@@ -48,7 +48,10 @@ const Dashboard = () => {
   const [weeklyMenu, setWeeklyMenu] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  console.log('Dashboard render - user:', user, 'loading:', loading);
+
   useEffect(() => {
+    console.log('Dashboard useEffect - user changed:', user);
     if (user) {
       initializeUser();
     }
