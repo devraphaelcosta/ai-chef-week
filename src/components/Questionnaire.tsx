@@ -315,6 +315,10 @@ const Questionnaire = () => {
         // Store everything in localStorage as fallback
         localStorage.setItem(`preferences_${user?.id}`, JSON.stringify(formData));
         localStorage.setItem(`menu_${user?.id}`, JSON.stringify(personalizedMenu));
+        
+        // Generate and save recipes for all meals
+        const generatedRecipes = generateRecipesFromMenu(personalizedMenu.meals);
+        localStorage.setItem(`recipes_${user?.id}`, JSON.stringify(generatedRecipes));
       }
 
       toast({
@@ -402,6 +406,101 @@ const Questionnaire = () => {
     };
 
     return { meals, shopping_list };
+  };
+
+  // Function to generate recipes for all meals in the menu
+  const generateRecipesFromMenu = (meals: any) => {
+    const recipes = [];
+    let id = 1;
+
+    Object.entries(meals).forEach(([day, dayMeals]: [string, any]) => {
+      Object.entries(dayMeals).forEach(([mealType, mealName]: [string, any]) => {
+        const recipe = generateRecipeForMeal(mealName, id.toString());
+        recipes.push(recipe);
+        id++;
+      });
+    });
+
+    return recipes;
+  };
+
+  // Function to generate a single recipe based on meal name
+  const generateRecipeForMeal = (mealName: string, id: string) => {
+    // Base recipe templates - em produção seria gerado por IA
+    const recipeTemplates: any = {
+      // Breakfast recipes
+      "aveia com frutas": {
+        ingredients: ["1 xícara de aveia em flocos", "1/2 xícara de frutas vermelhas", "2 colheres de mel", "1 xícara de leite"],
+        instructions: ["Cozinhe a aveia com leite em fogo baixo por 5 minutos", "Adicione as frutas vermelhas", "Finalize com mel e sirva"],
+        prep_time: 5,
+        cook_time: 5,
+        servings: 1
+      },
+      "smoothie": {
+        ingredients: ["1 banana", "1 xícara de leite de amêndoas", "2 colheres de aveia", "1 colher de mel"],
+        instructions: ["Bata todos os ingredientes no liquidificador", "Sirva gelado"],
+        prep_time: 3,
+        cook_time: 0,
+        servings: 1
+      },
+      "omelete": {
+        ingredients: ["3 ovos", "Vegetais picados (tomate, cebola, pimentão)", "Sal e pimenta", "1 colher de azeite"],
+        instructions: ["Bata os ovos com sal e pimenta", "Refogue os vegetais", "Adicione os ovos e cozinhe até firmar"],
+        prep_time: 5,
+        cook_time: 8,
+        servings: 1
+      },
+      // Lunch/Dinner recipes
+      "frango grelhado": {
+        ingredients: ["500g peito de frango", "Temperos (alho, sal, pimenta)", "1 colher de azeite", "Legumes para acompanhar"],
+        instructions: ["Tempere o frango", "Grelhe por 6-8 minutos de cada lado", "Sirva com legumes"],
+        prep_time: 10,
+        cook_time: 16,
+        servings: 2
+      },
+      "salmão": {
+        ingredients: ["400g filé de salmão", "Sal e pimenta", "Azeite", "Limão", "Ervas frescas"],
+        instructions: ["Tempere o salmão", "Asse a 180°C por 15 minutos", "Finalize com limão"],
+        prep_time: 5,
+        cook_time: 15,
+        servings: 2
+      },
+      "quinoa": {
+        ingredients: ["1 xícara de quinoa", "2 xícaras de caldo de legumes", "Vegetais variados", "Sal"],
+        instructions: ["Lave a quinoa", "Cozinhe com caldo por 15 minutos", "Misture com vegetais"],
+        prep_time: 5,
+        cook_time: 15,
+        servings: 3
+      }
+    };
+
+    // Match meal name to recipe template
+    const mealNameLower = mealName.toLowerCase();
+    let selectedTemplate = recipeTemplates["smoothie"]; // default
+
+    if (mealNameLower.includes("aveia")) {
+      selectedTemplate = recipeTemplates["aveia com frutas"];
+    } else if (mealNameLower.includes("smoothie") || mealNameLower.includes("vitamina")) {
+      selectedTemplate = recipeTemplates["smoothie"];
+    } else if (mealNameLower.includes("omelete")) {
+      selectedTemplate = recipeTemplates["omelete"];
+    } else if (mealNameLower.includes("frango")) {
+      selectedTemplate = recipeTemplates["frango grelhado"];
+    } else if (mealNameLower.includes("salmão") || mealNameLower.includes("peixe")) {
+      selectedTemplate = recipeTemplates["salmão"];
+    } else if (mealNameLower.includes("quinoa")) {
+      selectedTemplate = recipeTemplates["quinoa"];
+    }
+
+    return {
+      id,
+      meal_name: mealName,
+      ingredients: selectedTemplate.ingredients,
+      instructions: selectedTemplate.instructions,
+      prep_time: selectedTemplate.prep_time,
+      cook_time: selectedTemplate.cook_time,
+      servings: selectedTemplate.servings
+    };
   };
 
   const isSelected = (value: string) => {

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { 
   User, 
   Trophy, 
@@ -17,7 +18,12 @@ import {
   Zap,
   Brain,
   CheckCircle,
-  Clock
+  Clock,
+  RefreshCw,
+  BookOpen,
+  Coffee,
+  UtensilsCrossed,
+  Moon
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,21 +38,24 @@ interface UserProfile {
   preferences: any;
 }
 
-interface Challenge {
+interface Recipe {
   id: string;
-  title: string;
-  description: string;
-  points_reward: number;
-  completed: boolean;
-  challenge_type: 'daily' | 'weekly' | 'monthly';
+  meal_name: string;
+  ingredients: string[];
+  instructions: string[];
+  prep_time: number;
+  cook_time: number;
+  servings: number;
 }
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [weeklyMenu, setWeeklyMenu] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [substitutionInput, setSubstitutionInput] = useState<string>("");
+  const [substitutingMeal, setSubstitutingMeal] = useState<{day: string, mealType: string} | null>(null);
 
   console.log('Dashboard render - user:', user, 'loading:', loading);
 
@@ -61,7 +70,7 @@ const Dashboard = () => {
     try {
       await Promise.all([
         fetchProfile(),
-        fetchChallenges(),
+        fetchRecipes(),
         fetchWeeklyMenu()
       ]);
     } catch (error: any) {
@@ -153,95 +162,52 @@ const Dashboard = () => {
     }
   };
 
-  const fetchChallenges = async () => {
+  const fetchRecipes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('challenges')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        // Se a tabela não existe, usar desafios padrão
-        if (error.code === '42P01' || error.message.includes('does not exist')) {
-          console.log('Challenges table does not exist, using default challenges');
-          const defaultChallenges = [
-            {
-              id: '1',
-              title: "Complete seu primeiro cardápio",
-              description: "Gere seu primeiro cardápio semanal usando nossa IA",
-              points_reward: 100,
-              completed: false,
-              challenge_type: 'weekly' as const
-            },
-            {
-              id: '2',
-              title: "Use a lista de compras",
-              description: "Faça suas compras usando nossa lista inteligente",
-              points_reward: 50,
-              completed: false,
-              challenge_type: 'weekly' as const
-            },
-            {
-              id: '3',
-              title: "Mantenha a sequência",
-              description: "Use o WeekFit por 7 dias consecutivos",
-              points_reward: 200,
-              completed: false,
-              challenge_type: 'weekly' as const
-            }
-          ];
-          setChallenges(defaultChallenges);
-          return;
-        }
-        console.error('Challenges fetch error:', error);
-        setChallenges([]);
+      // Verificar se há receitas no localStorage
+      const localRecipes = localStorage.getItem(`recipes_${user?.id}`);
+      
+      if (localRecipes) {
+        console.log('Found recipes in localStorage');
+        setRecipes(JSON.parse(localRecipes));
         return;
       }
       
-      if (!data || data.length === 0) {
-        console.log('Creating default challenges for user:', user?.id);
-        const defaultChallenges = [
-          {
-            user_id: user?.id!,
-            title: "Complete seu primeiro cardápio",
-            description: "Gere seu primeiro cardápio semanal usando nossa IA",
-            points_reward: 100,
-            challenge_type: 'weekly' as const
-          },
-          {
-            user_id: user?.id!,
-            title: "Use a lista de compras",
-            description: "Faça suas compras usando nossa lista inteligente",
-            points_reward: 50,
-            challenge_type: 'weekly' as const
-          },
-          {
-            user_id: user?.id!,
-            title: "Mantenha a sequência",
-            description: "Use o WeekFit por 7 dias consecutivos",
-            points_reward: 200,
-            challenge_type: 'weekly' as const
-          }
-        ];
-
-        const { data: newChallenges, error: insertError } = await supabase
-          .from('challenges')
-          .insert(defaultChallenges)
-          .select();
-
-        if (insertError) {
-          console.error('Challenges creation error:', insertError);
-          setChallenges([]);
-          return;
+      // Se não há receitas salvas, gerar receitas padrão baseadas no cardápio
+      console.log('No saved recipes found, generating default recipes');
+      const defaultRecipes = [
+        {
+          id: '1',
+          meal_name: "Aveia com frutas vermelhas e mel",
+          ingredients: ["1 xícara de aveia em flocos", "1/2 xícara de frutas vermelhas", "2 colheres de mel", "1 xícara de leite"],
+          instructions: ["Cozinhe a aveia com leite em fogo baixo", "Adicione as frutas vermelhas", "Finalize com mel"],
+          prep_time: 5,
+          cook_time: 10,
+          servings: 1
+        },
+        {
+          id: '2',
+          meal_name: "Smoothie de banana com leite de amêndoas e aveia",
+          ingredients: ["1 banana", "1 xícara de leite de amêndoas", "2 colheres de aveia", "1 colher de mel"],
+          instructions: ["Bata todos os ingredientes no liquidificador", "Sirva gelado"],
+          prep_time: 3,
+          cook_time: 0,
+          servings: 1
+        },
+        {
+          id: '3',
+          meal_name: "Salada de quinoa com vegetais",
+          ingredients: ["1 xícara de quinoa cozida", "Tomate picado", "Pepino", "Azeite", "Limão", "Sal"],
+          instructions: ["Misture a quinoa com os vegetais", "Tempere com azeite, limão e sal"],
+          prep_time: 10,
+          cook_time: 0,
+          servings: 2
         }
-        setChallenges(newChallenges || []);
-      } else {
-        setChallenges(data);
-      }
+      ];
+      setRecipes(defaultRecipes);
     } catch (error: any) {
-      console.error('fetchChallenges error:', error);
-      setChallenges([]);
+      console.error('fetchRecipes error:', error);
+      setRecipes([]);
     }
   };
 
@@ -353,43 +319,92 @@ const Dashboard = () => {
     }
   };
 
-  const completeChallenge = async (challengeId: string, pointsReward: number) => {
+  const substituteMeal = async (day: string, mealType: string, restriction: string) => {
     try {
-      const { error } = await supabase
-        .from('challenges')
-        .update({ 
-          completed: true, 
-          completed_at: new Date().toISOString() 
-        })
-        .eq('id', challengeId);
+      const mealNames = {
+        breakfast: "café da manhã",
+        lunch: "almoço", 
+        dinner: "jantar"
+      };
 
-      if (error) throw error;
-
-      // Update user points
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ 
-          points: (profile?.points || 0) + pointsReward 
-        })
-        .eq('id', user?.id);
-
-      if (profileError) throw profileError;
-
+      // Gerar nova refeição com IA baseada na restrição
+      const userPreferences = JSON.parse(localStorage.getItem(`preferences_${user?.id}`) || '{}');
+      const newMeal = await generateMealWithAI(mealNames[mealType as keyof typeof mealNames], restriction, userPreferences);
+      
+      // Atualizar o cardápio
+      const updatedMenu = { ...weeklyMenu };
+      updatedMenu.meals[day][mealType] = newMeal;
+      
+      // Salvar no localStorage
+      localStorage.setItem(`menu_${user?.id}`, JSON.stringify(updatedMenu));
+      setWeeklyMenu(updatedMenu);
+      
       toast({
-        title: "Desafio concluído! 🎉",
-        description: `Você ganhou ${pointsReward} pontos!`
+        title: "Refeição substituída! 🔄",
+        description: "Nova opção gerada com base na sua preferência"
       });
-
-      fetchChallenges();
-      fetchProfile();
+      
+      setSubstitutingMeal(null);
+      setSubstitutionInput("");
     } catch (error: any) {
-      console.error('completeChallenge error:', error);
+      console.error('substituteMeal error:', error);
       toast({
-        title: "Erro ao completar desafio",
+        title: "Erro ao substituir refeição",
         description: error.message,
         variant: "destructive"
       });
     }
+  };
+
+  const generateMealWithAI = async (mealType: string, restriction: string, preferences: any) => {
+    // Simulação de geração de IA - em produção seria uma chamada real para IA
+    const veganOptions = {
+      "café da manhã": [
+        "Smoothie de açaí com banana e granola",
+        "Panqueca de aveia com frutas",
+        "Vitamina verde com espinafre e manga",
+        "Torrada integral com pasta de amendoim e banana"
+      ],
+      "almoço": [
+        "Bowl de quinoa com legumes grelhados",
+        "Salada de grão-de-bico com tahine",
+        "Wrap de hummus com vegetais",
+        "Risotto de cogumelos vegano"
+      ],
+      "jantar": [
+        "Curry de lentilhas com arroz integral",
+        "Macarrão de abobrinha com molho de tomate",
+        "Hambúrguer de feijão preto com salada",
+        "Sopa de abóbora com castanhas"
+      ]
+    };
+
+    const generalOptions = {
+      "café da manhã": [
+        "Omelete de claras com vegetais",
+        "Iogurte grego com granola",
+        "Smoothie proteico",
+        "Tapioca com queijo branco"
+      ],
+      "almoço": [
+        "Peito de frango grelhado com salada",
+        "Peixe assado com legumes",
+        "Salada Caesar com frango",
+        "Wrap de peru com vegetais"
+      ],
+      "jantar": [
+        "Salmão grelhado com aspargos",
+        "Frango refogado com brócolis",
+        "Omelete de legumes",
+        "Peixe com batata doce"
+      ]
+    };
+
+    const isVegan = preferences.diet === 'vegana' || restriction.toLowerCase().includes('carne') || restriction.toLowerCase().includes('frango');
+    const options = isVegan ? veganOptions : generalOptions;
+    const mealOptions = options[mealType as keyof typeof options] || options["almoço"];
+    
+    return mealOptions[Math.floor(Math.random() * mealOptions.length)];
   };
 
   const getLevelColor = (level: string) => {
@@ -501,7 +516,7 @@ const Dashboard = () => {
             <Tabs defaultValue="menu" className="space-y-6">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="menu">Cardápio</TabsTrigger>
-                <TabsTrigger value="challenges">Desafios</TabsTrigger>
+                <TabsTrigger value="recipes">Receitas</TabsTrigger>
                 <TabsTrigger value="shopping">Lista de Compras</TabsTrigger>
               </TabsList>
 
@@ -515,64 +530,92 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                      {weeklyMenu ? (
-                      <div className="space-y-4">
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="font-semibold mb-2">Segunda-feira</h4>
-                            <div className="space-y-1 text-sm">
-                              <p><strong>Café:</strong> {weeklyMenu.meals.monday.breakfast}</p>
-                              <p><strong>Almoço:</strong> {weeklyMenu.meals.monday.lunch}</p>
-                              <p><strong>Jantar:</strong> {weeklyMenu.meals.monday.dinner}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold mb-2">Terça-feira</h4>
-                            <div className="space-y-1 text-sm">
-                              <p><strong>Café:</strong> {weeklyMenu.meals.tuesday.breakfast}</p>
-                              <p><strong>Almoço:</strong> {weeklyMenu.meals.tuesday.lunch}</p>
-                              <p><strong>Jantar:</strong> {weeklyMenu.meals.tuesday.dinner}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold mb-2">Quarta-feira</h4>
-                            <div className="space-y-1 text-sm">
-                              <p><strong>Café:</strong> {weeklyMenu.meals.wednesday.breakfast}</p>
-                              <p><strong>Almoço:</strong> {weeklyMenu.meals.wednesday.lunch}</p>
-                              <p><strong>Jantar:</strong> {weeklyMenu.meals.wednesday.dinner}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold mb-2">Quinta-feira</h4>
-                            <div className="space-y-1 text-sm">
-                              <p><strong>Café:</strong> {weeklyMenu.meals.thursday.breakfast}</p>
-                              <p><strong>Almoço:</strong> {weeklyMenu.meals.thursday.lunch}</p>
-                              <p><strong>Jantar:</strong> {weeklyMenu.meals.thursday.dinner}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold mb-2">Sexta-feira</h4>
-                            <div className="space-y-1 text-sm">
-                              <p><strong>Café:</strong> {weeklyMenu.meals.friday.breakfast}</p>
-                              <p><strong>Almoço:</strong> {weeklyMenu.meals.friday.lunch}</p>
-                              <p><strong>Jantar:</strong> {weeklyMenu.meals.friday.dinner}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold mb-2">Sábado</h4>
-                            <div className="space-y-1 text-sm">
-                              <p><strong>Café:</strong> {weeklyMenu.meals.saturday.breakfast}</p>
-                              <p><strong>Almoço:</strong> {weeklyMenu.meals.saturday.lunch}</p>
-                              <p><strong>Jantar:</strong> {weeklyMenu.meals.saturday.dinner}</p>
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-semibold mb-2">Domingo</h4>
-                            <div className="space-y-1 text-sm">
-                              <p><strong>Café:</strong> {weeklyMenu.meals.sunday.breakfast}</p>
-                              <p><strong>Almoço:</strong> {weeklyMenu.meals.sunday.lunch}</p>
-                              <p><strong>Jantar:</strong> {weeklyMenu.meals.sunday.dinner}</p>
-                            </div>
-                          </div>
+                      <div className="space-y-6">
+                        <div className="grid gap-6">
+                          {Object.entries(weeklyMenu.meals).map(([dayKey, dayMeals]: [string, any]) => {
+                            const dayNames = {
+                              monday: "Segunda-feira",
+                              tuesday: "Terça-feira", 
+                              wednesday: "Quarta-feira",
+                              thursday: "Quinta-feira",
+                              friday: "Sexta-feira",
+                              saturday: "Sábado",
+                              sunday: "Domingo"
+                            };
+                            
+                            return (
+                              <Card key={dayKey} className="border-l-4 border-l-primary">
+                                <CardHeader className="pb-3">
+                                  <CardTitle className="text-lg text-primary">
+                                    {dayNames[dayKey as keyof typeof dayNames]}
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3">
+                                  <div className="grid gap-3">
+                                    {[
+                                      { key: 'breakfast', label: 'Café da Manhã', icon: Coffee },
+                                      { key: 'lunch', label: 'Almoço', icon: UtensilsCrossed },
+                                      { key: 'dinner', label: 'Jantar', icon: Moon }
+                                    ].map(({ key, label, icon: Icon }) => (
+                                      <div key={key} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                                        <div className="flex items-center gap-3 flex-1">
+                                          <Icon className="w-4 h-4 text-muted-foreground" />
+                                          <div>
+                                            <p className="text-sm font-medium text-muted-foreground">{label}</p>
+                                            <p className="text-sm">{dayMeals[key]}</p>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          {substitutingMeal?.day === dayKey && substitutingMeal?.mealType === key ? (
+                                            <div className="flex items-center gap-2">
+                                              <Input
+                                                placeholder="Ex: não gosto de frango"
+                                                value={substitutionInput}
+                                                onChange={(e) => setSubstitutionInput(e.target.value)}
+                                                className="w-48 h-8 text-xs"
+                                              />
+                                              <Button 
+                                                size="sm" 
+                                                onClick={() => substituteMeal(dayKey, key, substitutionInput)}
+                                                disabled={!substitutionInput.trim()}
+                                                className="h-8 px-2"
+                                              >
+                                                OK
+                                              </Button>
+                                              <Button 
+                                                size="sm" 
+                                                variant="outline"
+                                                onClick={() => {
+                                                  setSubstitutingMeal(null);
+                                                  setSubstitutionInput("");
+                                                }}
+                                                className="h-8 px-2"
+                                              >
+                                                ✕
+                                              </Button>
+                                            </div>
+                                          ) : (
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => {
+                                                setSubstitutingMeal({ day: dayKey, mealType: key });
+                                                setSubstitutionInput("");
+                                              }}
+                                              className="h-8 w-8 p-0 hover:scale-110 transition-transform"
+                                              title="Substituir refeição"
+                                            >
+                                              <RefreshCw className="w-3 h-3" />
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
                         </div>
                         <Button className="w-full">
                           <Brain className="w-4 h-4 mr-2" />
@@ -593,49 +636,72 @@ const Dashboard = () => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="challenges" className="space-y-4">
-                <div className="grid gap-4">
-                  {challenges.map((challenge) => (
-                    <Card key={challenge.id}>
-                      <CardContent className="pt-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Target className="w-4 h-4 text-primary" />
-                              <h4 className="font-semibold">{challenge.title}</h4>
-                              <Badge variant="outline" className="text-xs">
-                                {challenge.challenge_type}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              {challenge.description}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <Star className="w-4 h-4 text-accent" />
-                              <span className="text-sm font-medium">{challenge.points_reward} pontos</span>
-                            </div>
-                          </div>
-                          <div className="ml-4">
-                            {challenge.completed ? (
-                              <Badge className="bg-green-500">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Concluído
-                              </Badge>
-                            ) : (
-                              <Button 
-                                size="sm" 
-                                onClick={() => completeChallenge(challenge.id, challenge.points_reward)}
-                              >
-                                <Zap className="w-3 h-3 mr-1" />
-                                Completar
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+              <TabsContent value="recipes" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="w-5 h-5" />
+                      Receitas da Semana
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {recipes.length > 0 ? (
+                      <div className="grid gap-4">
+                        {recipes.map((recipe) => (
+                          <Card key={recipe.id} className="border border-border/50">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-lg">{recipe.meal_name}</CardTitle>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  Preparo: {recipe.prep_time}min
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <ChefHat className="w-4 h-4" />
+                                  Cozimento: {recipe.cook_time}min
+                                </div>
+                                <Badge variant="outline">{recipe.servings} porções</Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div>
+                                <h4 className="font-semibold mb-2 text-primary">Ingredientes:</h4>
+                                <ul className="space-y-1">
+                                  {recipe.ingredients.map((ingredient, index) => (
+                                    <li key={index} className="flex items-center gap-2 text-sm">
+                                      <CheckCircle className="w-3 h-3 text-green-500" />
+                                      {ingredient}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold mb-2 text-accent">Modo de Preparo:</h4>
+                                <ol className="space-y-1">
+                                  {recipe.instructions.map((instruction, index) => (
+                                    <li key={index} className="text-sm flex gap-2">
+                                      <span className="font-medium text-muted-foreground">{index + 1}.</span>
+                                      {instruction}
+                                    </li>
+                                  ))}
+                                </ol>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground mb-4">Gere um cardápio para ter suas receitas</p>
+                        <Button onClick={() => window.location.href = '/questionario'}>
+                          <Brain className="w-4 h-4 mr-2" />
+                          Gerar Receitas
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="shopping" className="space-y-4">
