@@ -351,45 +351,168 @@ const Questionnaire = () => {
     const isVegan = preferences.restricoes?.includes('vegano');
     const hasLactoseIntolerance = preferences.restricoes?.includes('lactose');
     const hasGlutenIntolerance = preferences.restricoes?.includes('gluten');
+    const selectedMeals = preferences.refeicoes || [];
     
-    // Base meals that can be customized
-    let meals = {
-      monday: {
-        breakfast: isVegan ? "Smoothie de banana com leite de amêndoas e aveia" : "Aveia com frutas e mel",
-        lunch: isVegetarian ? "Quinoa com legumes grelhados e tofu" : "Frango grelhado com quinoa e legumes",
-        dinner: isVegan ? "Curry de grão-de-bico com arroz integral" : isVegetarian ? "Omelete de legumes com batata doce" : "Salmão assado com batata doce"
+    console.log('Generating menu for selected meals:', selectedMeals);
+    
+    // Define meal options based on dietary restrictions
+    const mealOptions = {
+      cafe: {
+        vegan: [
+          "Smoothie de banana com leite de amêndoas e aveia",
+          "Panqueca de aveia com frutas",
+          "Vitamina verde com espinafre e manga",
+          "Torrada integral com pasta de amendoim"
+        ],
+        vegetarian: [
+          "Aveia com frutas e mel",
+          "Iogurte com granola e frutas",
+          "Omelete de claras com vegetais",
+          "Smoothie proteico com frutas"
+        ],
+        regular: [
+          "Aveia com frutas e mel",
+          "Iogurte com granola e frutas",
+          "Omelete de claras com vegetais",
+          "Smoothie proteico com frutas"
+        ]
       },
-      tuesday: {
-        breakfast: hasLactoseIntolerance ? "Smoothie de frutas com leite vegetal" : "Iogurte com granola e frutas",
-        lunch: isVegetarian ? "Salada de quinoa com grão-de-bico" : "Salada de atum com grão-de-bico",
-        dinner: isVegan ? "Refogado de tofu com legumes" : isVegetarian ? "Risoto de cogumelos" : "Peito de peru com arroz integral"
+      almoco: {
+        vegan: [
+          "Quinoa com legumes grelhados e tofu",
+          "Bowl de quinoa com grão-de-bico",
+          "Salada de lentilhas com vegetais",
+          "Hambúrguer de feijão preto com salada",
+          "Risotto de cogumelos vegano",
+          "Wrap de hummus com vegetais",
+          "Curry de vegetais com arroz integral"
+        ],
+        vegetarian: [
+          "Quinoa com legumes grelhados e tofu",
+          "Salada de quinoa com grão-de-bico",
+          "Omelete de legumes com batata doce",
+          "Risotto de cogumelos",
+          "Wrap de queijo com vegetais"
+        ],
+        regular: [
+          "Frango grelhado com quinoa e legumes",
+          "Salmão assado com batata doce",
+          "Peito de peru com arroz integral",
+          "Peixe grelhado com legumes",
+          "Carne magra com salada de quinoa",
+          "Frango com batata doce",
+          "Peixe com quinoa"
+        ]
       },
-      wednesday: {
-        breakfast: hasGlutenIntolerance ? "Vitamina de frutas com aveia sem glúten" : "Pão integral com abacate",
-        lunch: isVegetarian || isVegan ? "Hambúrguer de lentilha com salada" : "Peixe grelhado com legumes",
-        dinner: isVegan ? "Macarrão de abobrinha com molho de tomate" : isVegetarian ? "Omelete de legumes com batata" : "Frango assado com batata"
+      lanche: {
+        vegan: [
+          "Mix de castanhas e frutas secas",
+          "Smoothie de frutas com leite vegetal",
+          "Torrada com pasta de amendoim",
+          "Vitamina de frutas com aveia",
+          "Bowl de açaí vegano",
+          "Chips de banana assada",
+          "Shake proteico vegano"
+        ],
+        vegetarian: [
+          "Iogurte com granola",
+          "Sanduíche natural com queijo",
+          "Smoothie de frutas",
+          "Mix de castanhas",
+          "Torrada com queijo cottage",
+          "Vitamina proteica",
+          "Bowl de frutas com granola"
+        ],
+        regular: [
+          "Iogurte com granola",
+          "Sanduíche natural",
+          "Smoothie proteico",
+          "Mix de castanhas",
+          "Shake de proteína",
+          "Torrada com queijo cottage",
+          "Vitamina de frutas"
+        ]
       },
-      thursday: {
-        breakfast: "Smoothie verde com espinafre e banana",
-        lunch: isVegetarian || isVegan ? "Bowl de quinoa com legumes" : "Carne magra com salada",
-        dinner: isVegan ? "Sopa de lentilhas com legumes" : isVegetarian ? "Omelete de legumes" : "Omelete com legumes"
+      jantar: {
+        vegan: [
+          "Curry de grão-de-bico com arroz integral",
+          "Macarrão de abobrinha com molho de tomate",
+          "Sopa de lentilhas com legumes",
+          "Stir-fry de tofu com legumes",
+          "Buddha bowl vegano",
+          "Refogado de tofu com legumes",
+          "Hambúrguer de lentilha com salada"
+        ],
+        vegetarian: [
+          "Omelete de legumes com batata doce",
+          "Risotto de cogumelos",
+          "Omelete de legumes com batata",
+          "Omelete de legumes",
+          "Frango grelhado com salada",
+          "Peixe com arroz integral",
+          "Omelete de legumes"
+        ],
+        regular: [
+          "Salmão assado com batata doce",
+          "Peito de peru com arroz integral",
+          "Frango assado com batata",
+          "Omelete com legumes",
+          "Peixe com arroz integral",
+          "Frango grelhado com salada",
+          "Sopa de legumes com proteína"
+        ]
       },
-      friday: {
-        breakfast: hasLactoseIntolerance ? "Aveia com leite de coco" : "Vitamina de frutas com iogurte",
-        lunch: isVegetarian || isVegan ? "Wrap de hummus com vegetais" : "Frango com batata doce",
-        dinner: isVegan ? "Stir-fry de tofu com legumes" : isVegetarian ? "Peixe com arroz integral" : "Peixe com arroz integral"
-      },
-      saturday: {
-        breakfast: "Panqueca de aveia com frutas",
-        lunch: isVegetarian || isVegan ? "Salada de quinoa e vegetais" : "Carne com legumes grelhados",
-        dinner: isVegan ? "Buddha bowl vegano" : isVegetarian ? "Frango grelhado com salada" : "Frango grelhado com salada"
-      },
-      sunday: {
-        breakfast: hasGlutenIntolerance ? "Smoothie bowl sem glúten" : "Torrada integral com frutas",
-        lunch: isVegetarian || isVegan ? "Curry de vegetais com arroz" : "Peixe com quinoa",
-        dinner: isVegan ? "Sopa de legumes com grão-de-bico" : isVegetarian ? "Omelete de legumes" : "Omelete de legumes"
+      ceia: {
+        vegan: [
+          "Chá calmante com castanhas",
+          "Vitamina de banana com leite vegetal",
+          "Mix de frutas secas",
+          "Shake vegano leve",
+          "Iogurte vegetal com frutas",
+          "Smoothie verde leve",
+          "Chá com torrada integral"
+        ],
+        vegetarian: [
+          "Iogurte natural com mel",
+          "Vitamina de frutas leve",
+          "Chá com biscoitos integrais",
+          "Shake proteico leve",
+          "Queijo cottage com frutas",
+          "Smoothie de frutas",
+          "Leite morno com mel"
+        ],
+        regular: [
+          "Iogurte natural com mel",
+          "Vitamina de frutas leve",
+          "Chá com biscoitos integrais",
+          "Shake proteico leve",
+          "Queijo cottage com frutas",
+          "Smoothie de frutas",
+          "Leite morno com mel"
+        ]
       }
     };
+    
+    // Generate meals for each day of the week
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    let meals: any = {};
+    
+    days.forEach((day, index) => {
+      meals[day] = {};
+      
+      selectedMeals.forEach(mealType => {
+        const dietType = isVegan ? 'vegan' : isVegetarian ? 'vegetarian' : 'regular';
+        const options = mealOptions[mealType as keyof typeof mealOptions][dietType];
+        
+        // Select a different option for each day to ensure variety
+        const selectedOption = options[index % options.length];
+        
+        meals[day][mealType === 'cafe' ? 'breakfast' : 
+                   mealType === 'almoco' ? 'lunch' :
+                   mealType === 'lanche' ? 'snack' :
+                   mealType === 'jantar' ? 'dinner' : 'late_snack'] = selectedOption;
+      });
+    });
 
     // Generate shopping list based on meals and dietary restrictions
     let shopping_list = {
@@ -408,20 +531,22 @@ const Questionnaire = () => {
     return { meals, shopping_list };
   };
 
-  // Function to generate recipes for all meals in the menu
+  // Function to generate recipes for all meals in the menu organized by day
   const generateRecipesFromMenu = (meals: any) => {
-    const recipes = [];
+    const recipesByDay: any = {};
     let id = 1;
 
     Object.entries(meals).forEach(([day, dayMeals]: [string, any]) => {
+      recipesByDay[day] = {};
+      
       Object.entries(dayMeals).forEach(([mealType, mealName]: [string, any]) => {
         const recipe = generateRecipeForMeal(mealName, id.toString());
-        recipes.push(recipe);
+        recipesByDay[day][mealType] = recipe;
         id++;
       });
     });
 
-    return recipes;
+    return recipesByDay;
   };
 
   // Function to generate a single recipe based on meal name

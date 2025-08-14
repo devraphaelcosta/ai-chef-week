@@ -48,10 +48,16 @@ interface Recipe {
   servings: number;
 }
 
+interface RecipesByDay {
+  [day: string]: {
+    [mealType: string]: Recipe;
+  };
+}
+
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipes, setRecipes] = useState<RecipesByDay | Recipe[]>({});
   const [weeklyMenu, setWeeklyMenu] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [substitutionInput, setSubstitutionInput] = useState<string>("");
@@ -169,45 +175,85 @@ const Dashboard = () => {
       
       if (localRecipes) {
         console.log('Found recipes in localStorage');
-        setRecipes(JSON.parse(localRecipes));
+        const parsedRecipes = JSON.parse(localRecipes);
+        
+        // Check if recipes are organized by day (new format)
+        if (typeof parsedRecipes === 'object' && parsedRecipes.monday) {
+          setRecipes(parsedRecipes);
+        } else {
+          // Old format - convert to array for compatibility
+          setRecipes(Array.isArray(parsedRecipes) ? parsedRecipes : []);
+        }
         return;
       }
       
-      // Se não há receitas salvas, gerar receitas padrão baseadas no cardápio
-      console.log('No saved recipes found, generating default recipes');
-      const defaultRecipes = [
-        {
-          id: '1',
-          meal_name: "Aveia com frutas vermelhas e mel",
-          ingredients: ["1 xícara de aveia em flocos", "1/2 xícara de frutas vermelhas", "2 colheres de mel", "1 xícara de leite"],
-          instructions: ["Cozinhe a aveia com leite em fogo baixo", "Adicione as frutas vermelhas", "Finalize com mel"],
-          prep_time: 5,
-          cook_time: 10,
-          servings: 1
+      // Se não há receitas salvas, usar receitas padrão organizadas por dia
+      console.log('No saved recipes found, using default recipes organized by day');
+      const defaultRecipesByDay = {
+        monday: {
+          breakfast: {
+            id: '1',
+            meal_name: "Aveia com frutas vermelhas e mel",
+            ingredients: ["1 xícara de aveia em flocos", "1/2 xícara de frutas vermelhas", "2 colheres de mel", "1 xícara de leite"],
+            instructions: ["Cozinhe a aveia com leite em fogo baixo", "Adicione as frutas vermelhas", "Finalize com mel"],
+            prep_time: 5,
+            cook_time: 10,
+            servings: 1
+          },
+          lunch: {
+            id: '2',
+            meal_name: "Frango grelhado com quinoa e legumes",
+            ingredients: ["500g de peito de frango", "1 xícara de quinoa", "Legumes variados", "Temperos", "Azeite"],
+            instructions: ["Tempere e grelhe o frango", "Cozinhe a quinoa", "Refogue os legumes", "Sirva tudo junto"],
+            prep_time: 15,
+            cook_time: 25,
+            servings: 2
+          },
+          dinner: {
+            id: '3',
+            meal_name: "Salmão assado com batata doce",
+            ingredients: ["400g de salmão", "2 batatas doces", "Aspargos", "Azeite", "Limão", "Temperos"],
+            instructions: ["Tempere o salmão", "Asse com batata doce por 20 minutos", "Sirva com aspargos"],
+            prep_time: 10,
+            cook_time: 20,
+            servings: 2
+          }
         },
-        {
-          id: '2',
-          meal_name: "Smoothie de banana com leite de amêndoas e aveia",
-          ingredients: ["1 banana", "1 xícara de leite de amêndoas", "2 colheres de aveia", "1 colher de mel"],
-          instructions: ["Bata todos os ingredientes no liquidificador", "Sirva gelado"],
-          prep_time: 3,
-          cook_time: 0,
-          servings: 1
-        },
-        {
-          id: '3',
-          meal_name: "Salada de quinoa com vegetais",
-          ingredients: ["1 xícara de quinoa cozida", "Tomate picado", "Pepino", "Azeite", "Limão", "Sal"],
-          instructions: ["Misture a quinoa com os vegetais", "Tempere com azeite, limão e sal"],
-          prep_time: 10,
-          cook_time: 0,
-          servings: 2
+        tuesday: {
+          breakfast: {
+            id: '4',
+            meal_name: "Smoothie de banana com leite de amêndoas",
+            ingredients: ["1 banana", "1 xícara de leite de amêndoas", "2 colheres de aveia", "1 colher de mel"],
+            instructions: ["Bata todos os ingredientes no liquidificador", "Sirva gelado"],
+            prep_time: 3,
+            cook_time: 0,
+            servings: 1
+          },
+          lunch: {
+            id: '5',
+            meal_name: "Salada de atum com grão-de-bico",
+            ingredients: ["1 lata de atum", "1 xícara de grão-de-bico", "Folhas verdes", "Tomate", "Azeite", "Limão"],
+            instructions: ["Misture atum e grão-de-bico", "Adicione folhas e tomate", "Tempere com azeite e limão"],
+            prep_time: 8,
+            cook_time: 0,
+            servings: 2
+          },
+          dinner: {
+            id: '6',
+            meal_name: "Peito de peru com arroz integral",
+            ingredients: ["400g de peito de peru", "1 xícara de arroz integral", "Brócolis", "Temperos", "Azeite"],
+            instructions: ["Grelhe o peru temperado", "Cozinhe o arroz", "Refogue o brócolis", "Sirva junto"],
+            prep_time: 10,
+            cook_time: 30,
+            servings: 2
+          }
         }
-      ];
-      setRecipes(defaultRecipes);
+      };
+      
+      setRecipes(defaultRecipesByDay);
     } catch (error: any) {
       console.error('fetchRecipes error:', error);
-      setRecipes([]);
+      setRecipes({});
     }
   };
 
@@ -552,18 +598,25 @@ const Dashboard = () => {
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                   <div className="grid gap-3">
-                                    {[
-                                      { key: 'breakfast', label: 'Café da Manhã', icon: Coffee },
-                                      { key: 'lunch', label: 'Almoço', icon: UtensilsCrossed },
-                                      { key: 'dinner', label: 'Jantar', icon: Moon }
-                                    ].map(({ key, label, icon: Icon }) => (
+                                     {Object.entries(dayMeals).map(([key, mealName]) => {
+                                       const mealInfo = {
+                                         breakfast: { label: 'Café da Manhã', icon: Coffee },
+                                         lunch: { label: 'Almoço', icon: UtensilsCrossed },
+                                         dinner: { label: 'Jantar', icon: Moon },
+                                         snack: { label: 'Lanche da Tarde', icon: Star },
+                                         late_snack: { label: 'Ceia', icon: Moon }
+                                       };
+                                       
+                                       const { label, icon: Icon } = mealInfo[key as keyof typeof mealInfo] || { label: key, icon: UtensilsCrossed };
+                                       
+                                       return (
                                       <div key={key} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                                         <div className="flex items-center gap-3 flex-1">
                                           <Icon className="w-4 h-4 text-muted-foreground" />
-                                          <div>
-                                            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-                                            <p className="text-sm">{dayMeals[key]}</p>
-                                          </div>
+                                           <div>
+                                             <p className="text-sm font-medium text-muted-foreground">{label}</p>
+                                             <p className="text-sm">{String(mealName)}</p>
+                                           </div>
                                         </div>
                                         <div className="flex items-center gap-2">
                                           {substitutingMeal?.day === dayKey && substitutingMeal?.mealType === key ? (
@@ -610,8 +663,9 @@ const Dashboard = () => {
                                           )}
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
+                                       );
+                                     })}
+                                   </div>
                                 </CardContent>
                               </Card>
                             );
@@ -644,63 +698,159 @@ const Dashboard = () => {
                       Receitas da Semana
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    {recipes.length > 0 ? (
-                      <div className="grid gap-4">
-                        {recipes.map((recipe) => (
-                          <Card key={recipe.id} className="border border-border/50">
-                            <CardHeader className="pb-3">
-                              <CardTitle className="text-lg">{recipe.meal_name}</CardTitle>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-4 h-4" />
-                                  Preparo: {recipe.prep_time}min
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <ChefHat className="w-4 h-4" />
-                                  Cozimento: {recipe.cook_time}min
-                                </div>
-                                <Badge variant="outline">{recipe.servings} porções</Badge>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              <div>
-                                <h4 className="font-semibold mb-2 text-primary">Ingredientes:</h4>
-                                <ul className="space-y-1">
-                                  {recipe.ingredients.map((ingredient, index) => (
-                                    <li key={index} className="flex items-center gap-2 text-sm">
-                                      <CheckCircle className="w-3 h-3 text-green-500" />
-                                      {ingredient}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div>
-                                <h4 className="font-semibold mb-2 text-accent">Modo de Preparo:</h4>
-                                <ol className="space-y-1">
-                                  {recipe.instructions.map((instruction, index) => (
-                                    <li key={index} className="text-sm flex gap-2">
-                                      <span className="font-medium text-muted-foreground">{index + 1}.</span>
-                                      {instruction}
-                                    </li>
-                                  ))}
-                                </ol>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground mb-4">Gere um cardápio para ter suas receitas</p>
-                        <Button onClick={() => window.location.href = '/questionario'}>
-                          <Brain className="w-4 h-4 mr-2" />
-                          Gerar Receitas
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
+                   <CardContent>
+                     {/* Daily Recipe Organization */}
+                     {recipes && typeof recipes === 'object' && !Array.isArray(recipes) && Object.keys(recipes).length > 0 ? (
+                       <div className="space-y-8">
+                         {Object.entries(recipes as RecipesByDay).map(([day, dayRecipes]: [string, any]) => {
+                           const dayNames = {
+                             monday: 'Segunda-feira',
+                             tuesday: 'Terça-feira',
+                             wednesday: 'Quarta-feira',
+                             thursday: 'Quinta-feira',
+                             friday: 'Sexta-feira',
+                             saturday: 'Sábado',
+                             sunday: 'Domingo'
+                           };
+                           
+                           return (
+                             <div key={day} className="space-y-4">
+                               <div className="flex items-center gap-3 pb-3 border-b border-border/50">
+                                 <Calendar className="w-6 h-6 text-primary" />
+                                 <h3 className="text-xl font-bold text-primary">
+                                   Receitas {dayNames[day as keyof typeof dayNames]}
+                                 </h3>
+                               </div>
+                               
+                               <div className="grid gap-4">
+                                 {Object.entries(dayRecipes).map(([mealType, recipe]: [string, any]) => {
+                                   const mealIcons = {
+                                     breakfast: <Coffee className="w-5 h-5" />,
+                                     lunch: <UtensilsCrossed className="w-5 h-5" />,
+                                     dinner: <Moon className="w-5 h-5" />,
+                                     snack: <Star className="w-5 h-5" />,
+                                     late_snack: <Moon className="w-5 h-5" />
+                                   };
+                                   
+                                   const mealNames = {
+                                     breakfast: 'Café da Manhã',
+                                     lunch: 'Almoço',
+                                     dinner: 'Jantar',
+                                     snack: 'Lanche da Tarde',
+                                     late_snack: 'Ceia'
+                                   };
+                                   
+                                   return (
+                                     <Card key={`${day}-${mealType}`} className="overflow-hidden">
+                                       <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20">
+                                         <CardTitle className="flex items-center gap-2">
+                                           {mealIcons[mealType as keyof typeof mealIcons]}
+                                           <span className="text-sm text-muted-foreground">{mealNames[mealType as keyof typeof mealNames]} -</span>
+                                           {recipe.meal_name}
+                                         </CardTitle>
+                                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                           <div className="flex items-center gap-1">
+                                             <Clock className="w-4 h-4" />
+                                             Preparo: {recipe.prep_time}min
+                                           </div>
+                                           <div className="flex items-center gap-1">
+                                             <Clock className="w-4 h-4" />
+                                             Cozimento: {recipe.cook_time}min
+                                           </div>
+                                           <div className="flex items-center gap-1">
+                                             <UtensilsCrossed className="w-4 h-4" />
+                                             {recipe.servings} porções
+                                           </div>
+                                         </div>
+                                       </CardHeader>
+                                       <CardContent className="p-6">
+                                         <div className="grid md:grid-cols-2 gap-6">
+                                           <div>
+                                             <h4 className="font-semibold mb-3 text-green-700 dark:text-green-400">Ingredientes:</h4>
+                                             <ul className="space-y-1">
+                                               {recipe.ingredients.map((ingredient: string, index: number) => (
+                                                 <li key={index} className="flex items-start gap-2">
+                                                   <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                                   <span className="text-sm">{ingredient}</span>
+                                                 </li>
+                                               ))}
+                                             </ul>
+                                           </div>
+                                           <div>
+                                             <h4 className="font-semibold mb-3 text-blue-700 dark:text-blue-400">Modo de Preparo:</h4>
+                                             <ol className="space-y-2">
+                                               {recipe.instructions.map((instruction: string, index: number) => (
+                                                 <li key={index} className="flex items-start gap-3">
+                                                   <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium flex-shrink-0">
+                                                     {index + 1}
+                                                   </span>
+                                                   <span className="text-sm">{instruction}</span>
+                                                 </li>
+                                               ))}
+                                             </ol>
+                                           </div>
+                                         </div>
+                                       </CardContent>
+                                     </Card>
+                                   );
+                                 })}
+                               </div>
+                             </div>
+                           );
+                         })}
+                       </div>
+                     ) : Array.isArray(recipes) && recipes.length > 0 ? (
+                       <div className="grid gap-4">
+                         {(recipes as Recipe[]).map((recipe) => (
+                           <Card key={recipe.id} className="border border-border/50">
+                             <CardHeader className="pb-3">
+                               <CardTitle className="text-lg">{recipe.meal_name}</CardTitle>
+                               <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                 <div className="flex items-center gap-1">
+                                   <Clock className="w-4 h-4" />
+                                   Preparo: {recipe.prep_time}min
+                                 </div>
+                                 <div className="flex items-center gap-1">
+                                   <ChefHat className="w-4 h-4" />
+                                   Cozimento: {recipe.cook_time}min
+                                 </div>
+                                 <Badge variant="outline">{recipe.servings} porções</Badge>
+                               </div>
+                             </CardHeader>
+                             <CardContent className="space-y-4">
+                               <div>
+                                 <h4 className="font-semibold mb-2 text-primary">Ingredientes:</h4>
+                                 <ul className="space-y-1">
+                                   {recipe.ingredients.map((ingredient, index) => (
+                                     <li key={index} className="flex items-center gap-2 text-sm">
+                                       <CheckCircle className="w-3 h-3 text-green-500" />
+                                       {ingredient}
+                                     </li>
+                                   ))}
+                                 </ul>
+                               </div>
+                               <div>
+                                 <h4 className="font-semibold mb-2 text-accent">Modo de Preparo:</h4>
+                                 <ol className="space-y-1">
+                                   {recipe.instructions.map((instruction, index) => (
+                                     <li key={index} className="text-sm flex gap-2">
+                                       <span className="font-medium text-muted-foreground">{index + 1}.</span>
+                                       {instruction}
+                                     </li>
+                                   ))}
+                                 </ol>
+                               </div>
+                             </CardContent>
+                           </Card>
+                         ))}
+                       </div>
+                     ) : (
+                       <Card className="text-center p-8">
+                         <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                         <p className="text-muted-foreground">Nenhuma receita encontrada. Complete o questionário para gerar receitas personalizadas!</p>
+                       </Card>
+                     )}
+                   </CardContent>
                 </Card>
               </TabsContent>
 
