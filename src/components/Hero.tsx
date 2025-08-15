@@ -14,7 +14,7 @@ const Hero = () => {
           {/* Badge */}
           <Badge className="mb-6 bg-gradient-primary border-0 text-primary-foreground px-6 py-2 text-sm font-medium shadow-glow">
             <Sparkles className="w-4 h-4 mr-2" />
-            Powered by AI
+            Inteligência Artificial Personalizada
           </Badge>
           
           {/* Main heading */}

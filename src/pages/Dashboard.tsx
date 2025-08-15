@@ -23,7 +23,8 @@ import {
   BookOpen,
   Coffee,
   UtensilsCrossed,
-  Moon
+  Moon,
+  ArrowLeft
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -370,7 +371,9 @@ const Dashboard = () => {
       const mealNames = {
         breakfast: "café da manhã",
         lunch: "almoço", 
-        dinner: "jantar"
+        snack: "lanche da tarde",
+        dinner: "jantar",
+        late_snack: "ceia"
       };
 
       // Gerar nova refeição com IA baseada na restrição
@@ -381,13 +384,37 @@ const Dashboard = () => {
       const updatedMenu = { ...weeklyMenu };
       updatedMenu.meals[day][mealType] = newMeal;
       
-      // Salvar no localStorage
+      // Regenerar receita para a nova refeição
+      const updatedRecipes = { ...recipes as RecipesByDay };
+      if (!updatedRecipes[day]) updatedRecipes[day] = {};
+      
+      // Gerar nova receita baseada na nova refeição
+      const newRecipe = {
+        id: `${day}_${mealType}_${Date.now()}`,
+        meal_name: newMeal,
+        ingredients: getIngredientsForMeal(newMeal),
+        instructions: getInstructionsForMeal(newMeal),
+        prep_time: getPrepTimeForMeal(newMeal),
+        cook_time: getCookTimeForMeal(newMeal),
+        servings: 1
+      };
+      
+      updatedRecipes[day][mealType] = newRecipe;
+      
+      // Regenerar lista de compras baseada em todas as receitas
+      const updatedShoppingList = generateShoppingListFromRecipes(updatedRecipes);
+      updatedMenu.shopping_list = updatedShoppingList;
+      
+      // Salvar tudo no localStorage
       localStorage.setItem(`menu_${user?.id}`, JSON.stringify(updatedMenu));
+      localStorage.setItem(`recipes_${user?.id}`, JSON.stringify(updatedRecipes));
+      
       setWeeklyMenu(updatedMenu);
+      setRecipes(updatedRecipes);
       
       toast({
         title: "Refeição substituída! 🔄",
-        description: "Nova opção gerada com base na sua preferência"
+        description: "Nova opção gerada com receita e lista de compras atualizadas"
       });
       
       setSubstitutingMeal(null);
@@ -400,6 +427,97 @@ const Dashboard = () => {
         variant: "destructive"
       });
     }
+  };
+
+  // Helper functions for recipe generation
+  const getIngredientsForMeal = (mealName: string): string[] => {
+    const name = mealName.toLowerCase();
+    if (name.includes('smoothie')) return ["1 banana", "1 xícara de leite de amêndoas", "2 colheres de aveia", "1 colher de mel"];
+    if (name.includes('curry')) return ["2 latas de grão-de-bico", "1 lata de leite de coco", "Cebola", "Alho", "Curry em pó", "Arroz integral"];
+    if (name.includes('quinoa')) return ["1 xícara de quinoa", "2 xícaras de caldo de legumes", "200g de tofu", "Legumes variados"];
+    if (name.includes('salada')) return ["Folhas verdes", "Tomate", "Pepino", "Cenoura", "Azeite", "Vinagre"];
+    return ["Ingredientes básicos", "Temperos", "Azeite"];
+  };
+
+  const getInstructionsForMeal = (mealName: string): string[] => {
+    const name = mealName.toLowerCase();
+    if (name.includes('smoothie')) return ["Bata todos os ingredientes no liquidificador", "Sirva gelado"];
+    if (name.includes('curry')) return ["Refogue cebola e alho", "Adicione curry e grão-de-bico", "Cozinhe com leite de coco por 15 min"];
+    if (name.includes('quinoa')) return ["Cozinhe quinoa com caldo", "Grelhe tofu", "Refogue legumes", "Misture tudo"];
+    if (name.includes('salada')) return ["Lave e corte vegetais", "Misture em uma tigela", "Tempere com azeite e vinagre"];
+    return ["Prepare os ingredientes", "Cozinhe conforme necessário", "Tempere e sirva"];
+  };
+
+  const getPrepTimeForMeal = (mealName: string): number => {
+    const name = mealName.toLowerCase();
+    if (name.includes('smoothie')) return 3;
+    if (name.includes('curry')) return 15;
+    if (name.includes('quinoa')) return 10;
+    if (name.includes('salada')) return 8;
+    return 10;
+  };
+
+  const getCookTimeForMeal = (mealName: string): number => {
+    const name = mealName.toLowerCase();
+    if (name.includes('smoothie')) return 0;
+    if (name.includes('curry')) return 20;
+    if (name.includes('quinoa')) return 20;
+    if (name.includes('salada')) return 0;
+    return 15;
+  };
+
+  const generateShoppingListFromRecipes = (recipesByDay: RecipesByDay) => {
+    const allIngredients: string[] = [];
+    
+    Object.values(recipesByDay).forEach(dayRecipes => {
+      Object.values(dayRecipes).forEach(recipe => {
+        allIngredients.push(...recipe.ingredients);
+      });
+    });
+
+    // Categorize ingredients
+    const shopping_list: any = {
+      proteins: [],
+      carbs: [],
+      vegetables: [],
+      fruits: [],
+      dairy: [],
+      legumes: [],
+      condiments: [],
+      others: []
+    };
+
+    allIngredients.forEach(ingredient => {
+      const ing = ingredient.toLowerCase();
+      
+      if (ing.includes('frango') || ing.includes('salmão') || ing.includes('tofu') || ing.includes('ovo')) {
+        shopping_list.proteins.push(ingredient);
+      } else if (ing.includes('quinoa') || ing.includes('arroz') || ing.includes('aveia') || ing.includes('pão')) {
+        shopping_list.carbs.push(ingredient);
+      } else if (ing.includes('tomate') || ing.includes('cebola') || ing.includes('alho') || ing.includes('legumes')) {
+        shopping_list.vegetables.push(ingredient);
+      } else if (ing.includes('banana') || ing.includes('frutas')) {
+        shopping_list.fruits.push(ingredient);
+      } else if (ing.includes('leite') || ing.includes('iogurte')) {
+        shopping_list.dairy.push(ingredient);
+      } else if (ing.includes('grão-de-bico') || ing.includes('lentilha')) {
+        shopping_list.legumes.push(ingredient);
+      } else if (ing.includes('azeite') || ing.includes('mel') || ing.includes('tempero')) {
+        shopping_list.condiments.push(ingredient);
+      } else {
+        shopping_list.others.push(ingredient);
+      }
+    });
+
+    // Remove duplicates and clean empty categories
+    Object.keys(shopping_list).forEach(category => {
+      shopping_list[category] = [...new Set(shopping_list[category])];
+      if (shopping_list[category].length === 0) {
+        delete shopping_list[category];
+      }
+    });
+
+    return shopping_list;
   };
 
   const generateMealWithAI = async (mealType: string, restriction: string, preferences: any) => {
@@ -492,6 +610,14 @@ const Dashboard = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = '/'}
+                className="mr-2 hover:bg-primary/10"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Voltar
+              </Button>
               <Brain className="w-8 h-8 text-primary" />
               <span className="text-xl font-bold">WeekFit Dashboard</span>
             </div>
@@ -862,54 +988,144 @@ const Dashboard = () => {
                       Lista de Compras Inteligente
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    {weeklyMenu?.shopping_list ? (
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="font-semibold mb-3 text-primary">🥩 Proteínas</h4>
-                          <ul className="space-y-2">
-                            {weeklyMenu.shopping_list.proteins.map((item: string, index: number) => (
-                              <li key={index} className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span className="text-sm">{item}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold mb-3 text-accent">🌾 Carboidratos</h4>
-                          <ul className="space-y-2">
-                            {weeklyMenu.shopping_list.carbs.map((item: string, index: number) => (
-                              <li key={index} className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span className="text-sm">{item}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold mb-3 text-green-600">🥬 Vegetais</h4>
-                          <ul className="space-y-2">
-                            {weeklyMenu.shopping_list.vegetables.map((item: string, index: number) => (
-                              <li key={index} className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span className="text-sm">{item}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold mb-3 text-orange-500">🍎 Frutas</h4>
-                          <ul className="space-y-2">
-                            {weeklyMenu.shopping_list.fruits.map((item: string, index: number) => (
-                              <li key={index} className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span className="text-sm">{item}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
+                   <CardContent>
+                     {weeklyMenu?.shopping_list ? (
+                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                         {/* Proteínas */}
+                         {weeklyMenu.shopping_list.proteins && weeklyMenu.shopping_list.proteins.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-primary">🥩 Proteínas</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.proteins.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+
+                         {/* Carboidratos */}
+                         {weeklyMenu.shopping_list.carbs && weeklyMenu.shopping_list.carbs.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-accent">🌾 Carboidratos</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.carbs.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+
+                         {/* Vegetais */}
+                         {weeklyMenu.shopping_list.vegetables && weeklyMenu.shopping_list.vegetables.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-green-600">🥬 Vegetais</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.vegetables.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+
+                         {/* Frutas */}
+                         {weeklyMenu.shopping_list.fruits && weeklyMenu.shopping_list.fruits.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-orange-500">🍎 Frutas</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.fruits.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+
+                         {/* Laticínios */}
+                         {weeklyMenu.shopping_list.dairy && weeklyMenu.shopping_list.dairy.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-blue-500">🥛 Laticínios</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.dairy.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+
+                         {/* Leguminosas */}
+                         {weeklyMenu.shopping_list.legumes && weeklyMenu.shopping_list.legumes.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-yellow-600">🌱 Leguminosas</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.legumes.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+
+                         {/* Castanhas e Sementes */}
+                         {weeklyMenu.shopping_list.nuts_seeds && weeklyMenu.shopping_list.nuts_seeds.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-amber-600">🥜 Castanhas & Sementes</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.nuts_seeds.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+
+                         {/* Temperos e Condimentos */}
+                         {weeklyMenu.shopping_list.condiments && weeklyMenu.shopping_list.condiments.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-purple-500">🧂 Temperos & Condimentos</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.condiments.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+
+                         {/* Outros */}
+                         {weeklyMenu.shopping_list.others && weeklyMenu.shopping_list.others.length > 0 && (
+                           <div>
+                             <h4 className="font-semibold mb-3 text-gray-500">📦 Outros</h4>
+                             <ul className="space-y-2">
+                               {weeklyMenu.shopping_list.others.map((item: string, index: number) => (
+                                 <li key={index} className="flex items-center gap-2">
+                                   <CheckCircle className="w-4 h-4 text-green-500" />
+                                   <span className="text-sm">{item}</span>
+                                 </li>
+                               ))}
+                             </ul>
+                           </div>
+                         )}
+                       </div>
                     ) : (
                       <div className="text-center py-8">
                         <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

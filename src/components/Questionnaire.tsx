@@ -514,19 +514,106 @@ const Questionnaire = () => {
       });
     });
 
-    // Generate shopping list based on meals and dietary restrictions
-    let shopping_list = {
-      proteins: isVegan ? ["Tofu (500g)", "Grão-de-bico (500g)", "Lentilhas (500g)", "Quinoa (500g)"] 
-                : isVegetarian ? ["Ovos (12un)", "Tofu (500g)", "Grão-de-bico (500g)", "Quinoa (500g)"]
-                : ["Frango (1kg)", "Salmão (500g)", "Atum em lata (2un)", "Ovos (12un)"],
-      carbs: hasGlutenIntolerance ? ["Quinoa (500g)", "Arroz integral (1kg)", "Batata doce (1kg)", "Aveia sem glúten (500g)"]
-            : ["Quinoa (500g)", "Arroz integral (1kg)", "Batata doce (1kg)", "Pão integral (1un)"],
-      vegetables: ["Brócolis (1un)", "Cenoura (500g)", "Abobrinha (2un)", "Espinafre (1 maço)", "Tomate (500g)", "Cebola (3un)"],
-      fruits: ["Banana (1kg)", "Maçã (6un)", "Morango (250g)", "Abacate (2un)", "Limão (4un)"],
-      dairy: hasLactoseIntolerance || isVegan ? ["Leite de amêndoas (1L)", "Leite de coco (1L)"] 
-            : ["Iogurte natural (1L)", "Leite (1L)", "Queijo (200g)"],
-      others: ["Azeite de oliva", "Mel", "Temperos diversos", "Aveia (500g)"]
+    // Generate comprehensive shopping list based on all meals
+    const allIngredients: string[] = [];
+    
+    // Extract ingredients from all generated recipes
+    Object.values(meals).forEach((dayMeals: any) => {
+      Object.values(dayMeals).forEach((mealName: any) => {
+        const recipe = generateRecipeForMeal(mealName, "temp");
+        allIngredients.push(...recipe.ingredients);
+      });
+    });
+
+    // Categorize ingredients intelligently
+    const categorizeIngredient = (ingredient: string) => {
+      const ing = ingredient.toLowerCase();
+      
+      if (ing.includes('frango') || ing.includes('salmão') || ing.includes('peixe') || ing.includes('atum') || 
+          ing.includes('tofu') || ing.includes('ovo') || ing.includes('carne') || ing.includes('peru')) {
+        return 'proteins';
+      } else if (ing.includes('quinoa') || ing.includes('arroz') || ing.includes('aveia') || ing.includes('pão') || 
+                 ing.includes('batata') || ing.includes('macarrão') || ing.includes('tortilha')) {
+        return 'carbs';
+      } else if (ing.includes('brócolis') || ing.includes('cenoura') || ing.includes('abobrinha') || ing.includes('espinafre') || 
+                 ing.includes('tomate') || ing.includes('cebola') || ing.includes('alho') || ing.includes('pimentão') || 
+                 ing.includes('pepino') || ing.includes('couve') || ing.includes('folhas') || ing.includes('aipo') || 
+                 ing.includes('gengibre') || ing.includes('aspargos') || ing.includes('cogumelos')) {
+        return 'vegetables';
+      } else if (ing.includes('banana') || ing.includes('maçã') || ing.includes('morango') || ing.includes('abacate') || 
+                 ing.includes('limão') || ing.includes('manga') || ing.includes('frutas')) {
+        return 'fruits';
+      } else if (ing.includes('leite') || ing.includes('iogurte') || ing.includes('queijo')) {
+        return 'dairy';
+      } else if (ing.includes('grão-de-bico') || ing.includes('lentilha') || ing.includes('feijão')) {
+        return 'legumes';
+      } else if (ing.includes('castanha') || ing.includes('amêndoa') || ing.includes('noz') || ing.includes('semente') || 
+                 ing.includes('granola') || ing.includes('chia') || ing.includes('tahine')) {
+        return 'nuts_seeds';
+      } else if (ing.includes('azeite') || ing.includes('óleo') || ing.includes('mel') || ing.includes('sal') || 
+                 ing.includes('pimenta') || ing.includes('tempero') || ing.includes('vinagre') || ing.includes('shoyu') || 
+                 ing.includes('curry') || ing.includes('manjericão') || ing.includes('canela')) {
+        return 'condiments';
+      } else {
+        return 'others';
+      }
     };
+
+    // Group and count ingredients
+    const shopping_list: any = {
+      proteins: [],
+      carbs: [],
+      vegetables: [],
+      fruits: [],
+      dairy: [],
+      legumes: [],
+      nuts_seeds: [],
+      condiments: [],
+      others: []
+    };
+
+    // Count occurrences and organize
+    const ingredientCount: { [key: string]: number } = {};
+    allIngredients.forEach(ingredient => {
+      const cleanIng = ingredient.split('(')[0].trim(); // Remove quantities for counting
+      ingredientCount[cleanIng] = (ingredientCount[cleanIng] || 0) + 1;
+    });
+
+    // Create final categorized shopping list
+    Object.keys(ingredientCount).forEach(ingredient => {
+      const category = categorizeIngredient(ingredient);
+      const count = ingredientCount[ingredient];
+      
+      // Add quantity suggestions based on usage frequency
+      let quantity = '';
+      if (count >= 5) quantity = ' (quantidade para semana toda)';
+      else if (count >= 3) quantity = ' (uso frequente)';
+      
+      shopping_list[category].push(ingredient + quantity);
+    });
+
+    // Add essential items based on dietary preferences
+    if (isVegan) {
+      if (!shopping_list.proteins.some((p: string) => p.includes('Tofu'))) {
+        shopping_list.proteins.push('Tofu (500g)');
+      }
+      if (!shopping_list.dairy.some((d: string) => d.includes('leite vegetal'))) {
+        shopping_list.dairy.push('Leite vegetal (1L)');
+      }
+    }
+
+    if (!isVegan && !isVegetarian) {
+      if (!shopping_list.proteins.some((p: string) => p.includes('Frango'))) {
+        shopping_list.proteins.push('Frango (1kg)');
+      }
+    }
+
+    // Clean empty categories
+    Object.keys(shopping_list).forEach(category => {
+      if (shopping_list[category].length === 0) {
+        delete shopping_list[category];
+      }
+    });
 
     return { meals, shopping_list };
   };
@@ -551,10 +638,10 @@ const Questionnaire = () => {
 
   // Function to generate a single recipe based on meal name
   const generateRecipeForMeal = (mealName: string, id: string) => {
-    // Base recipe templates - em produção seria gerado por IA
+    // Comprehensive recipe templates with correct ingredients and instructions
     const recipeTemplates: any = {
       // Breakfast recipes
-      "aveia com frutas": {
+      "aveia": {
         ingredients: ["1 xícara de aveia em flocos", "1/2 xícara de frutas vermelhas", "2 colheres de mel", "1 xícara de leite"],
         instructions: ["Cozinhe a aveia com leite em fogo baixo por 5 minutos", "Adicione as frutas vermelhas", "Finalize com mel e sirva"],
         prep_time: 5,
@@ -568,6 +655,27 @@ const Questionnaire = () => {
         cook_time: 0,
         servings: 1
       },
+      "panqueca": {
+        ingredients: ["1 xícara de aveia em flocos", "1 banana amassada", "2 ovos", "1/2 xícara de leite vegetal", "1 colher de fermento"],
+        instructions: ["Misture todos os ingredientes", "Aqueça frigideira antiaderente", "Cozinhe por 2-3 min de cada lado"],
+        prep_time: 10,
+        cook_time: 6,
+        servings: 2
+      },
+      "vitamina": {
+        ingredients: ["1 xícara de espinafre", "1 banana", "1/2 manga", "1 xícara de água de coco", "1 colher de chia"],
+        instructions: ["Bata todos os ingredientes no liquidificador", "Coe se preferir", "Sirva gelado com gelo"],
+        prep_time: 5,
+        cook_time: 0,
+        servings: 1
+      },
+      "torrada": {
+        ingredients: ["2 fatias de pão integral", "1/2 abacate", "Pasta de amendoim", "Banana fatiada", "Mel"],
+        instructions: ["Toste o pão", "Espalhe pasta de amendoim", "Adicione abacate e banana", "Finalize com mel"],
+        prep_time: 5,
+        cook_time: 2,
+        servings: 1
+      },
       "omelete": {
         ingredients: ["3 ovos", "Vegetais picados (tomate, cebola, pimentão)", "Sal e pimenta", "1 colher de azeite"],
         instructions: ["Bata os ovos com sal e pimenta", "Refogue os vegetais", "Adicione os ovos e cozinhe até firmar"],
@@ -575,46 +683,175 @@ const Questionnaire = () => {
         cook_time: 8,
         servings: 1
       },
-      // Lunch/Dinner recipes
-      "frango grelhado": {
-        ingredients: ["500g peito de frango", "Temperos (alho, sal, pimenta)", "1 colher de azeite", "Legumes para acompanhar"],
-        instructions: ["Tempere o frango", "Grelhe por 6-8 minutos de cada lado", "Sirva com legumes"],
+      "iogurte": {
+        ingredients: ["1 pote de iogurte natural", "3 colheres de granola", "Frutas fatiadas", "1 colher de mel"],
+        instructions: ["Coloque o iogurte na tigela", "Adicione frutas e granola", "Finalize com mel"],
+        prep_time: 3,
+        cook_time: 0,
+        servings: 1
+      },
+
+      // Lunch recipes
+      "quinoa com legumes": {
+        ingredients: ["1 xícara de quinoa", "2 xícaras de caldo de legumes", "200g de tofu", "Brócolis", "Cenoura", "Azeite", "Temperos"],
+        instructions: ["Lave e cozinhe quinoa com caldo por 15 min", "Grelhe o tofu temperado", "Refogue os legumes", "Misture tudo e tempere"],
+        prep_time: 15,
+        cook_time: 20,
+        servings: 2
+      },
+      "bowl de quinoa": {
+        ingredients: ["1 xícara de quinoa", "1 lata de grão-de-bico", "Folhas verdes", "Tomate cereja", "Pepino", "Azeite", "Limão"],
+        instructions: ["Cozinhe quinoa", "Escorra e tempere grão-de-bico", "Monte bowl com folhas", "Adicione quinoa e grão-de-bico", "Tempere com azeite e limão"],
         prep_time: 10,
-        cook_time: 16,
+        cook_time: 15,
+        servings: 2
+      },
+      "salada de lentilhas": {
+        ingredients: ["1 xícara de lentilhas", "Tomate", "Pepino", "Cebola roxa", "Salsinha", "Azeite", "Vinagre", "Sal"],
+        instructions: ["Cozinhe lentilhas até ficarem macias", "Pique todos os vegetais", "Misture lentilhas com vegetais", "Tempere com azeite e vinagre"],
+        prep_time: 15,
+        cook_time: 25,
+        servings: 3
+      },
+      "hambúrguer de feijão": {
+        ingredients: ["2 xícaras de feijão preto", "1 cebola", "2 dentes de alho", "Farinha de aveia", "Temperos", "Pão integral", "Salada"],
+        instructions: ["Amasse feijão com cebola e alho", "Forme hambúrgueres", "Grelhe por 4 min cada lado", "Monte no pão com salada"],
+        prep_time: 20,
+        cook_time: 8,
+        servings: 4
+      },
+      "frango grelhado": {
+        ingredients: ["500g peito de frango", "Temperos (alho, sal, pimenta)", "1 colher de azeite", "Quinoa", "Legumes variados"],
+        instructions: ["Tempere o frango", "Grelhe por 6-8 minutos de cada lado", "Cozinhe quinoa", "Refogue legumes", "Sirva junto"],
+        prep_time: 15,
+        cook_time: 20,
         servings: 2
       },
       "salmão": {
-        ingredients: ["400g filé de salmão", "Sal e pimenta", "Azeite", "Limão", "Ervas frescas"],
-        instructions: ["Tempere o salmão", "Asse a 180°C por 15 minutos", "Finalize com limão"],
-        prep_time: 5,
-        cook_time: 15,
+        ingredients: ["400g filé de salmão", "Sal e pimenta", "Azeite", "Limão", "Batata doce", "Aspargos"],
+        instructions: ["Tempere o salmão", "Asse a 180°C por 15 minutos", "Asse batata doce", "Refogue aspargos", "Finalize com limão"],
+        prep_time: 10,
+        cook_time: 20,
         servings: 2
       },
-      "quinoa": {
-        ingredients: ["1 xícara de quinoa", "2 xícaras de caldo de legumes", "Vegetais variados", "Sal"],
-        instructions: ["Lave a quinoa", "Cozinhe com caldo por 15 minutos", "Misture com vegetais"],
+      "wrap": {
+        ingredients: ["Tortilha integral", "Hummus", "Cenoura ralada", "Pepino", "Tomate", "Folhas verdes", "Grão-de-bico"],
+        instructions: ["Espalhe hummus na tortilha", "Adicione vegetais e grão-de-bico", "Enrole bem apertado", "Corte pela metade"],
+        prep_time: 10,
+        cook_time: 0,
+        servings: 2
+      },
+
+      // Dinner recipes
+      "curry de grão-de-bico": {
+        ingredients: ["2 latas de grão-de-bico", "1 lata de leite de coco", "Cebola", "Alho", "Gengibre", "Curry em pó", "Tomate", "Arroz integral"],
+        instructions: ["Refogue cebola, alho e gengibre", "Adicione curry e tomate", "Junte grão-de-bico e leite de coco", "Cozinhe por 15 min", "Sirva com arroz"],
+        prep_time: 15,
+        cook_time: 20,
+        servings: 4
+      },
+      "macarrão de abobrinha": {
+        ingredients: ["2 abobrinhas médias", "Tomate", "Alho", "Cebola", "Manjericão", "Azeite", "Sal"],
+        instructions: ["Corte abobrinha em fatias finas", "Refogue alho e cebola", "Adicione tomate e temperos", "Misture com abobrinha", "Cozinhe por 5 min"],
+        prep_time: 15,
+        cook_time: 10,
+        servings: 2
+      },
+      "sopa de lentilhas": {
+        ingredients: ["1 xícara de lentilhas", "Cenoura", "Aipo", "Cebola", "Alho", "Caldo de legumes", "Temperos"],
+        instructions: ["Refogue cebola e alho", "Adicione cenoura e aipo", "Junte lentilhas e caldo", "Cozinhe por 25 min", "Tempere a gosto"],
+        prep_time: 10,
+        cook_time: 30,
+        servings: 4
+      },
+      "stir-fry": {
+        ingredients: ["200g tofu", "Brócolis", "Pimentão", "Cenoura", "Molho shoyu", "Gengibre", "Alho", "Óleo de gergelim", "Arroz"],
+        instructions: ["Corte tofu em cubos", "Refogue alho e gengibre", "Adicione tofu e doure", "Junte vegetais", "Tempere com shoyu", "Sirva com arroz"],
+        prep_time: 15,
+        cook_time: 12,
+        servings: 2
+      },
+      "buddha bowl": {
+        ingredients: ["Quinoa", "Grão-de-bico", "Abacate", "Cenoura roxa", "Couve", "Sementes", "Tahine", "Limão"],
+        instructions: ["Cozinhe quinoa", "Asse grão-de-bico temperado", "Massageie couve com limão", "Monte bowl com todos ingredientes", "Finalize com tahine"],
+        prep_time: 20,
+        cook_time: 25,
+        servings: 2
+      },
+      "risotto": {
+        ingredients: ["1 xícara de arroz arbóreo", "Cogumelos", "Cebola", "Vinho branco", "Caldo de legumes", "Queijo parmesão", "Manteiga"],
+        instructions: ["Refogue cebola", "Adicione arroz e toste", "Junte vinho", "Adicione caldo aos poucos", "Finalize com queijo"],
+        prep_time: 10,
+        cook_time: 25,
+        servings: 4
+      },
+
+      // Snacks
+      "mix de castanhas": {
+        ingredients: ["Castanha do Pará", "Amêndoas", "Nozes", "Frutas secas", "Mel"],
+        instructions: ["Misture todas as castanhas", "Adicione frutas secas", "Regue com mel", "Armazene em recipiente hermético"],
         prep_time: 5,
-        cook_time: 15,
-        servings: 3
+        cook_time: 0,
+        servings: 4
+      },
+      "chips de banana": {
+        ingredients: ["2 bananas", "Canela", "Açúcar de coco"],
+        instructions: ["Corte bananas em fatias finas", "Polvilhe canela e açúcar", "Asse a 150°C por 2 horas", "Vire na metade do tempo"],
+        prep_time: 10,
+        cook_time: 120,
+        servings: 2
       }
     };
 
-    // Match meal name to recipe template
+    // Advanced matching system
     const mealNameLower = mealName.toLowerCase();
     let selectedTemplate = recipeTemplates["smoothie"]; // default
 
+    // More comprehensive matching
     if (mealNameLower.includes("aveia")) {
-      selectedTemplate = recipeTemplates["aveia com frutas"];
+      selectedTemplate = recipeTemplates["aveia"];
     } else if (mealNameLower.includes("smoothie") || mealNameLower.includes("vitamina")) {
       selectedTemplate = recipeTemplates["smoothie"];
+    } else if (mealNameLower.includes("panqueca")) {
+      selectedTemplate = recipeTemplates["panqueca"];
+    } else if (mealNameLower.includes("torrada")) {
+      selectedTemplate = recipeTemplates["torrada"];
     } else if (mealNameLower.includes("omelete")) {
       selectedTemplate = recipeTemplates["omelete"];
+    } else if (mealNameLower.includes("iogurte")) {
+      selectedTemplate = recipeTemplates["iogurte"];
+    } else if (mealNameLower.includes("quinoa") && mealNameLower.includes("legumes")) {
+      selectedTemplate = recipeTemplates["quinoa com legumes"];
+    } else if (mealNameLower.includes("bowl") && mealNameLower.includes("quinoa")) {
+      selectedTemplate = recipeTemplates["bowl de quinoa"];
+    } else if (mealNameLower.includes("salada") && mealNameLower.includes("lentilhas")) {
+      selectedTemplate = recipeTemplates["salada de lentilhas"];
+    } else if (mealNameLower.includes("hambúrguer") && mealNameLower.includes("feijão")) {
+      selectedTemplate = recipeTemplates["hambúrguer de feijão"];
     } else if (mealNameLower.includes("frango")) {
       selectedTemplate = recipeTemplates["frango grelhado"];
     } else if (mealNameLower.includes("salmão") || mealNameLower.includes("peixe")) {
       selectedTemplate = recipeTemplates["salmão"];
+    } else if (mealNameLower.includes("wrap")) {
+      selectedTemplate = recipeTemplates["wrap"];
+    } else if (mealNameLower.includes("curry")) {
+      selectedTemplate = recipeTemplates["curry de grão-de-bico"];
+    } else if (mealNameLower.includes("macarrão") && mealNameLower.includes("abobrinha")) {
+      selectedTemplate = recipeTemplates["macarrão de abobrinha"];
+    } else if (mealNameLower.includes("sopa") && mealNameLower.includes("lentilhas")) {
+      selectedTemplate = recipeTemplates["sopa de lentilhas"];
+    } else if (mealNameLower.includes("stir-fry") || mealNameLower.includes("refogado")) {
+      selectedTemplate = recipeTemplates["stir-fry"];
+    } else if (mealNameLower.includes("buddha")) {
+      selectedTemplate = recipeTemplates["buddha bowl"];
+    } else if (mealNameLower.includes("risotto")) {
+      selectedTemplate = recipeTemplates["risotto"];
+    } else if (mealNameLower.includes("mix") && mealNameLower.includes("castanhas")) {
+      selectedTemplate = recipeTemplates["mix de castanhas"];
+    } else if (mealNameLower.includes("chips") && mealNameLower.includes("banana")) {
+      selectedTemplate = recipeTemplates["chips de banana"];
     } else if (mealNameLower.includes("quinoa")) {
-      selectedTemplate = recipeTemplates["quinoa"];
+      selectedTemplate = recipeTemplates["quinoa com legumes"];
     }
 
     return {
