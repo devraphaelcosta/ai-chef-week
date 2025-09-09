@@ -42,10 +42,12 @@ const Header = () => {
               <div className="flex items-center space-x-2">
                 <Button 
                   variant="ghost" 
+                  size="sm"
                   onClick={() => window.location.href = '/dashboard'}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground hover:text-foreground p-2 rounded-full"
+                  title="Meu Perfil"
                 >
-                  Dashboard
+                  <Brain className="w-5 h-5" />
                 </Button>
                 <Button variant="ghost" onClick={signOut} className="text-muted-foreground">
                   Sair
@@ -97,7 +99,8 @@ const Header = () => {
                       onClick={() => window.location.href = '/dashboard'}
                       className="w-full justify-start"
                     >
-                      Dashboard
+                      <Brain className="w-4 h-4 mr-2" />
+                      Meu Perfil
                     </Button>
                     <Button variant="ghost" onClick={signOut} className="w-full justify-start">
                       Sair

@@ -63,6 +63,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [substitutionInput, setSubstitutionInput] = useState<string>("");
   const [substitutingMeal, setSubstitutingMeal] = useState<{day: string, mealType: string} | null>(null);
+  const [ingredientsInput, setIngredientsInput] = useState<string>("");
+  const [generatingRecipe, setGeneratingRecipe] = useState(false);
+  const [suggestedRecipes, setSuggestedRecipes] = useState<Recipe[]>([]);
 
   console.log('Dashboard render - user:', user, 'loading:', loading);
 
@@ -466,6 +469,172 @@ const Dashboard = () => {
     return 15;
   };
 
+  const generateRecipeIdeas = async () => {
+    if (!ingredientsInput.trim()) {
+      toast({
+        title: "Digite alguns ingredientes",
+        description: "Informe quais ingredientes você tem disponível",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setGeneratingRecipe(true);
+    try {
+      // Simular geração de receitas com IA baseada nos ingredientes
+      const userDiet = profile?.preferences?.diet || 'equilibrada';
+      const ingredients = ingredientsInput.split(',').map(i => i.trim()).filter(i => i);
+      
+      const recipeIdeas = await generateRecipeIdeasWithAI(ingredients, userDiet);
+      setSuggestedRecipes(recipeIdeas);
+      
+      toast({
+        title: "Receitas geradas! 🍽️",
+        description: `${recipeIdeas.length} ideias criadas com seus ingredientes`
+      });
+    } catch (error: any) {
+      console.error('Error generating recipe ideas:', error);
+      toast({
+        title: "Erro ao gerar receitas",
+        description: "Tente novamente em alguns instantes",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingRecipe(false);
+    }
+  };
+
+  const generateRecipeIdeasWithAI = async (ingredients: string[], diet: string): Promise<Recipe[]> => {
+    // Simular diferentes combinações baseadas nos ingredientes informados
+    const baseRecipes = [
+      {
+        name: "Salada Refrescante com {ingrediente1}",
+        baseIngredients: ["folhas verdes", "azeite", "limão"],
+        instructions: ["Lave e corte os ingredientes", "Misture em uma tigela", "Tempere com azeite e limão"],
+        prep: 10, cook: 0
+      },
+      {
+        name: "Refogado Nutritivo de {ingrediente1} e {ingrediente2}",
+        baseIngredients: ["azeite", "alho", "cebola", "temperos"],  
+        instructions: ["Refogue alho e cebola", "Adicione os ingredientes principais", "Tempere e cozinhe por 10 minutos"],
+        prep: 8, cook: 12
+      },
+      {
+        name: "Sopa Cremosa com {ingrediente1}",
+        baseIngredients: ["caldo de legumes", "cebola", "azeite"],
+        instructions: ["Refogue a cebola", "Adicione os ingredientes e caldo", "Cozinhe até ficar cremoso"],
+        prep: 15, cook: 25
+      }
+    ];
+
+    return baseRecipes.slice(0, Math.min(3, Math.max(1, ingredients.length))).map((base, index) => {
+      const mainIngredient = ingredients[0] || "legumes";
+      const secondIngredient = ingredients[1] || "temperos";
+      
+      return {
+        id: `idea_${Date.now()}_${index}`,
+        meal_name: base.name.replace('{ingrediente1}', mainIngredient).replace('{ingrediente2}', secondIngredient),
+        ingredients: [mainIngredient, secondIngredient, ...base.baseIngredients].filter((v, i, a) => a.indexOf(v) === i),
+        instructions: base.instructions,
+        prep_time: base.prep,
+        cook_time: base.cook,
+        servings: 2
+      };
+    });
+  };
+
+  // Componente para a seção de ideias de receitas
+  const RecipeIdeasSection = ({ userProfile }: { userProfile: UserProfile | null }) => {
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">
+            Digite os ingredientes que você tem disponível e receba sugestões personalizadas de receitas!
+          </p>
+          
+          <div className="max-w-md mx-auto space-y-4">
+            <Input
+              placeholder="Ex: frango, brócolis, batata doce..."
+              value={ingredientsInput}
+              onChange={(e) => setIngredientsInput(e.target.value)}
+              className="w-full"
+            />
+            <Button 
+              onClick={generateRecipeIdeas}
+              disabled={generatingRecipe}
+              className="w-full"
+            >
+              {generatingRecipe ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Gerando receitas...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Gerar Ideias com IA
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {suggestedRecipes.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-center">Receitas Sugeridas</h3>
+            <div className="grid gap-4">
+              {suggestedRecipes.map((recipe) => (
+                <Card key={recipe.id} className="border border-border/50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Star className="w-5 h-5 text-yellow-500" />
+                      {recipe.meal_name}
+                    </CardTitle>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        Preparo: {recipe.prep_time}min
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <ChefHat className="w-4 h-4" />
+                        Cozimento: {recipe.cook_time}min
+                      </div>
+                      <Badge variant="outline">{recipe.servings} porções</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-2 text-primary">Ingredientes:</h4>
+                      <ul className="space-y-1">
+                        {recipe.ingredients.map((ingredient, index) => (
+                          <li key={index} className="flex items-center gap-2 text-sm">
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                            {ingredient}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2 text-accent">Modo de Preparo:</h4>
+                      <ol className="space-y-1">
+                        {recipe.instructions.map((instruction, index) => (
+                          <li key={index} className="text-sm flex gap-2">
+                            <span className="font-medium text-muted-foreground">{index + 1}.</span>
+                            {instruction}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const generateShoppingListFromRecipes = (recipesByDay: RecipesByDay) => {
     const allIngredients: string[] = [];
     
@@ -686,9 +855,10 @@ const Dashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="menu" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="menu">Cardápio</TabsTrigger>
                 <TabsTrigger value="recipes">Receitas</TabsTrigger>
+                <TabsTrigger value="ideas">Ideias de Receitas</TabsTrigger>
                 <TabsTrigger value="shopping">Lista de Compras</TabsTrigger>
               </TabsList>
 
@@ -797,10 +967,13 @@ const Dashboard = () => {
                             );
                           })}
                         </div>
-                        <Button className="w-full">
-                          <Brain className="w-4 h-4 mr-2" />
-                          Gerar Novo Cardápio com IA
-                        </Button>
+                         <Button 
+                           className="w-full" 
+                           onClick={() => window.location.href = '/questionario'}
+                         >
+                           <Brain className="w-4 h-4 mr-2" />
+                           Gerar Novo Cardápio com IA
+                         </Button>
                       </div>
                     ) : (
                       <div className="text-center py-8">
@@ -977,6 +1150,20 @@ const Dashboard = () => {
                        </Card>
                      )}
                    </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="ideas" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ChefHat className="w-5 h-5" />
+                      Ideias de Receitas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RecipeIdeasSection userProfile={profile} />
+                  </CardContent>
                 </Card>
               </TabsContent>
 
