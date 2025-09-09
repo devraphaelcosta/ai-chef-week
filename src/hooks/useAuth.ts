@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/integrations/supabase/client'
 import { User } from '@supabase/supabase-js'
 import { toast } from '@/hooks/use-toast'
 
@@ -68,29 +68,7 @@ export const useAuth = () => {
       })
       if (error) throw error
       
-      // Try to create profile in database, but don't fail if table doesn't exist
-      if (data.user) {
-        try {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              email: data.user.email!,
-              full_name: fullName,
-              level: 'Bronze',
-              points: 0,
-              current_streak: 0,
-              max_streak: 0,
-              preferences: {}
-            })
-          
-          if (profileError) {
-            console.log('Profile table not found or error creating profile:', profileError.message)
-          }
-        } catch (profileError: any) {
-          console.log('Could not create profile, table may not exist:', profileError.message)
-        }
-      }
+      // Profile creation will be handled later when database is properly set up
       
       toast({
         title: "Conta criada!",
