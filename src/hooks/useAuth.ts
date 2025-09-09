@@ -68,7 +68,29 @@ export const useAuth = () => {
       })
       if (error) throw error
       
-      // Profile creation will be handled later when database is properly set up
+      // Create profile in database when user signs up
+      if (data.user) {
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email!,
+              full_name: fullName,
+              level: 'Bronze',
+              points: 0,
+              current_streak: 0,
+              max_streak: 0,
+              preferences: {}
+            })
+          
+          if (profileError) {
+            console.log('Error creating profile:', profileError.message)
+          }
+        } catch (profileError: any) {
+          console.log('Could not create profile:', profileError.message)
+        }
+      }
       
       toast({
         title: "Conta criada!",
