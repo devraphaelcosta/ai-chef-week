@@ -61,8 +61,6 @@ const Dashboard = () => {
   const [recipes, setRecipes] = useState<RecipesByDay | Recipe[]>({});
   const [weeklyMenu, setWeeklyMenu] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [substitutionInput, setSubstitutionInput] = useState<string>("");
-  const [substitutingMeal, setSubstitutingMeal] = useState<{day: string, mealType: string} | null>(null);
 
   console.log('Dashboard render - user:', user, 'loading:', loading);
 
@@ -366,68 +364,6 @@ const Dashboard = () => {
     }
   };
 
-  const substituteMeal = async (day: string, mealType: string, restriction: string) => {
-    try {
-      const mealNames = {
-        breakfast: "café da manhã",
-        lunch: "almoço", 
-        snack: "lanche da tarde",
-        dinner: "jantar",
-        late_snack: "ceia"
-      };
-
-      // Gerar nova refeição com IA baseada na restrição
-      const userPreferences = JSON.parse(localStorage.getItem(`preferences_${user?.id}`) || '{}');
-      const newMeal = await generateMealWithAI(mealNames[mealType as keyof typeof mealNames], restriction, userPreferences);
-      
-      // Atualizar o cardápio
-      const updatedMenu = { ...weeklyMenu };
-      updatedMenu.meals[day][mealType] = newMeal;
-      
-      // Regenerar receita para a nova refeição
-      const updatedRecipes = { ...recipes as RecipesByDay };
-      if (!updatedRecipes[day]) updatedRecipes[day] = {};
-      
-      // Gerar nova receita baseada na nova refeição
-      const newRecipe = {
-        id: `${day}_${mealType}_${Date.now()}`,
-        meal_name: newMeal,
-        ingredients: getIngredientsForMeal(newMeal),
-        instructions: getInstructionsForMeal(newMeal),
-        prep_time: getPrepTimeForMeal(newMeal),
-        cook_time: getCookTimeForMeal(newMeal),
-        servings: 1
-      };
-      
-      updatedRecipes[day][mealType] = newRecipe;
-      
-      // Regenerar lista de compras baseada em todas as receitas
-      const updatedShoppingList = generateShoppingListFromRecipes(updatedRecipes);
-      updatedMenu.shopping_list = updatedShoppingList;
-      
-      // Salvar tudo no localStorage
-      localStorage.setItem(`menu_${user?.id}`, JSON.stringify(updatedMenu));
-      localStorage.setItem(`recipes_${user?.id}`, JSON.stringify(updatedRecipes));
-      
-      setWeeklyMenu(updatedMenu);
-      setRecipes(updatedRecipes);
-      
-      toast({
-        title: "Refeição substituída! 🔄",
-        description: "Nova opção gerada com receita e lista de compras atualizadas"
-      });
-      
-      setSubstitutingMeal(null);
-      setSubstitutionInput("");
-    } catch (error: any) {
-      console.error('substituteMeal error:', error);
-      toast({
-        title: "Erro ao substituir refeição",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
 
   // Helper functions for recipe generation
   const getIngredientsForMeal = (mealName: string): string[] => {
@@ -465,6 +401,268 @@ const Dashboard = () => {
     if (name.includes('salada')) return 0;
     return 15;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando seu dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Você precisa estar logado para acessar o dashboard.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Profile Card */}
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Meu Perfil
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <User className="w-10 h-10 text-primary" />
+                </div>
+                <h3 className="font-semibold">{profile?.full_name || user?.email?.split('@')[0]}</h3>
+                <p className="text-sm text-muted-foreground">{profile?.email}</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Nível</span>
+                  <Badge variant="secondary" className="gap-1">
+                    <Trophy className="w-3 h-3" />
+                    {profile?.level}
+                  </Badge>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Pontos</span>
+                    <span>{profile?.points}</span>
+                  </div>
+                  <Progress value={(profile?.points || 0) % 100} className="h-2" />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Sequência atual</span>
+                  <Badge variant="outline" className="gap-1">
+                    <Target className="w-3 h-3" />
+                    {profile?.current_streak} dias
+                  </Badge>
+                </div>
+              </div>
+
+              <Button 
+                variant="outline" 
+                onClick={signOut}
+                className="w-full"
+              >
+                Sair
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <Tabs defaultValue="menu" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="menu">Cardápio</TabsTrigger>
+                <TabsTrigger value="recipes">Receitas</TabsTrigger>
+                <TabsTrigger value="shopping">Lista de Compras</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="menu" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ChefHat className="w-5 h-5" />
+                      Cardápio da Semana
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {weeklyMenu?.meals ? (
+                      <div className="space-y-4">
+                        {Object.entries(weeklyMenu.meals).map(([day, meals]: [string, any]) => (
+                          <div key={day} className="border rounded-lg p-4">
+                            <h4 className="font-semibold capitalize mb-3 flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              {day === 'monday' ? 'Segunda' : 
+                               day === 'tuesday' ? 'Terça' :
+                               day === 'wednesday' ? 'Quarta' :
+                               day === 'thursday' ? 'Quinta' :
+                               day === 'friday' ? 'Sexta' :
+                               day === 'saturday' ? 'Sábado' : 'Domingo'}
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              {Object.entries(meals).map(([mealType, meal]: [string, any]) => (
+                                <div key={mealType} className="bg-muted/50 rounded-lg p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h5 className="text-sm font-medium capitalize flex items-center gap-1">
+                                      {mealType === 'breakfast' ? <Coffee className="w-3 h-3" /> :
+                                       mealType === 'lunch' ? <UtensilsCrossed className="w-3 h-3" /> :
+                                       <Moon className="w-3 h-3" />}
+                                      {mealType === 'breakfast' ? 'Café' : 
+                                       mealType === 'lunch' ? 'Almoço' : 'Jantar'}
+                                    </h5>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{meal}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        Carregando cardápio...
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="recipes" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="w-5 h-5" />
+                      Minhas Receitas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {typeof recipes === 'object' && !Array.isArray(recipes) ? (
+                      <div className="space-y-6">
+                        {Object.entries(recipes as RecipesByDay).map(([day, dayRecipes]) => (
+                          <div key={day} className="space-y-3">
+                            <h4 className="font-semibold capitalize text-lg border-b pb-2">
+                              {day === 'monday' ? 'Segunda' : 
+                               day === 'tuesday' ? 'Terça' :
+                               day === 'wednesday' ? 'Quarta' :
+                               day === 'thursday' ? 'Quinta' :
+                               day === 'friday' ? 'Sexta' :
+                               day === 'saturday' ? 'Sábado' : 'Domingo'}
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {Object.entries(dayRecipes).map(([mealType, recipe]) => (
+                                <Card key={mealType} className="border-2">
+                                  <CardHeader className="pb-3">
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                      {mealType === 'breakfast' ? <Coffee className="w-4 h-4" /> :
+                                       mealType === 'lunch' ? <UtensilsCrossed className="w-4 h-4" /> :
+                                       <Moon className="w-4 h-4" />}
+                                      {recipe.meal_name}
+                                    </CardTitle>
+                                  </CardHeader>
+                                  <CardContent className="space-y-3">
+                                    <div className="flex gap-2">
+                                      <Badge variant="secondary" className="text-xs">
+                                        <Clock className="w-3 h-3 mr-1" />
+                                        {recipe.prep_time + recipe.cook_time} min
+                                      </Badge>
+                                      <Badge variant="outline" className="text-xs">
+                                        {recipe.servings} porções
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div>
+                                      <h5 className="text-sm font-medium mb-1">Ingredientes:</h5>
+                                      <ul className="text-xs text-muted-foreground space-y-1">
+                                        {recipe.ingredients.slice(0, 3).map((ingredient, idx) => (
+                                          <li key={idx}>• {ingredient}</li>
+                                        ))}
+                                        {recipe.ingredients.length > 3 && (
+                                          <li>• E mais {recipe.ingredients.length - 3} ingredientes...</li>
+                                        )}
+                                      </ul>
+                                    </div>
+                                    
+                                    <div>
+                                      <h5 className="text-sm font-medium mb-1">Preparo:</h5>
+                                      <p className="text-xs text-muted-foreground">
+                                        {recipe.instructions[0]}
+                                        {recipe.instructions.length > 1 && '...'}
+                                      </p>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        Nenhuma receita encontrada
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="shopping" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShoppingCart className="w-5 h-5" />
+                      Lista de Compras
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {weeklyMenu?.shopping_list ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {Object.entries(weeklyMenu.shopping_list).map(([category, items]: [string, any]) => (
+                          <div key={category} className="space-y-3">
+                            <h4 className="font-semibold capitalize text-primary">
+                              {category === 'proteins' ? 'Proteínas' :
+                               category === 'carbs' ? 'Carboidratos' :
+                               category === 'vegetables' ? 'Vegetais' :
+                               category === 'fruits' ? 'Frutas' :
+                               category === 'dairy' ? 'Laticínios' : 'Outros'}
+                            </h4>
+                            <ul className="space-y-2">
+                              {items.map((item: string, idx: number) => (
+                                <li key={idx} className="flex items-center gap-2 text-sm">
+                                  <CheckCircle className="w-4 h-4 text-muted-foreground" />
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        Lista de compras não disponível
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 
 
