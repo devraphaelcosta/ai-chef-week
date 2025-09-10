@@ -160,7 +160,7 @@ const RecipeAssistant = () => {
       <div className="fixed bottom-6 right-6 z-50">
         <div className="relative">
           {/* Balão de fala */}
-          <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 max-w-xs border border-border">
+          <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 max-w-sm border border-border">
             <div className="text-sm text-foreground font-medium mb-1">
               Oi! 👋
             </div>

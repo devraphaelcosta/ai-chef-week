@@ -7,7 +7,6 @@ import { toast } from '@/hooks/use-toast'
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [hasShownWelcome, setHasShownWelcome] = useState(false)
 
   useEffect(() => {
     // Get initial session
@@ -22,18 +21,23 @@ export const useAuth = () => {
         setUser(session?.user ?? null)
         setLoading(false)
 
-        if (event === 'SIGNED_IN' && session?.user && !hasShownWelcome) {
-          setHasShownWelcome(true)
-          toast({
-            title: "Login realizado com sucesso!",
-            description: "Bem-vindo ao WeekFit 🎉"
-          })
+        // Only show welcome toast on first login
+        if (event === 'SIGNED_IN' && session?.user) {
+          const hasShownWelcome = localStorage.getItem(`welcome_shown_${session.user.id}`)
+          
+          if (!hasShownWelcome) {
+            localStorage.setItem(`welcome_shown_${session.user.id}`, 'true')
+            toast({
+              title: "Login realizado com sucesso!",
+              description: "Bem-vindo ao WeekFit 🎉"
+            })
+          }
         }
       }
     )
 
     return () => subscription.unsubscribe()
-  }, [hasShownWelcome])
+  }, [])
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
@@ -131,7 +135,6 @@ export const useAuth = () => {
   const signOut = async () => {
     try {
       setLoading(true)
-      setHasShownWelcome(false) // Reset welcome flag
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       
