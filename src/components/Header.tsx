@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, Brain } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import AuthModal from "./AuthModal";
@@ -47,7 +47,7 @@ const Header = () => {
                   className="text-muted-foreground hover:text-foreground p-2 rounded-full"
                   title="Meu Perfil"
                 >
-                  <Brain className="w-5 h-5" />
+                  <User className="w-5 h-5" />
                 </Button>
                 <Button variant="ghost" onClick={signOut} className="text-muted-foreground">
                   Sair
@@ -99,7 +99,7 @@ const Header = () => {
                       onClick={() => window.location.href = '/dashboard'}
                       className="w-full justify-start"
                     >
-                      <Brain className="w-4 h-4 mr-2" />
+                      <User className="w-4 h-4 mr-2" />
                       Meu Perfil
                     </Button>
                     <Button variant="ghost" onClick={signOut} className="w-full justify-start">

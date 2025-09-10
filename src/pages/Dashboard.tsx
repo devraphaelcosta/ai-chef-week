@@ -27,6 +27,7 @@ import {
   ArrowLeft
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import RecipeAssistant from "@/components/RecipeAssistant";
 
 interface UserProfile {
   id: string;
@@ -426,6 +427,17 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
+          </Button>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Profile Card */}
           <Card className="lg:col-span-1">
@@ -660,6 +672,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      <RecipeAssistant />
     </div>
   );
 };
