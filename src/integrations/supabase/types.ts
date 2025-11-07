@@ -14,6 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          name: string
+          points: number
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          icon: string
+          id?: string
+          name: string
+          points?: number
+          requirement_type: string
+          requirement_value: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          points?: number
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: []
+      }
+      daily_challenges: {
+        Row: {
+          challenge_date: string
+          challenge_type: string
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          description: string
+          id: string
+          points: number
+          user_id: string
+        }
+        Insert: {
+          challenge_date?: string
+          challenge_type: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          points?: number
+          user_id: string
+        }
+        Update: {
+          challenge_date?: string
+          challenge_type?: string
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          points?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meal_logs: {
+        Row: {
+          calories: number | null
+          carbs: number | null
+          created_at: string | null
+          fats: number | null
+          id: string
+          meal_date: string
+          meal_name: string
+          meal_type: string
+          notes: string | null
+          protein: number | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          carbs?: number | null
+          created_at?: string | null
+          fats?: number | null
+          id?: string
+          meal_date?: string
+          meal_name: string
+          meal_type: string
+          notes?: string | null
+          protein?: number | null
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          carbs?: number | null
+          created_at?: string | null
+          fats?: number | null
+          id?: string
+          meal_date?: string
+          meal_name?: string
+          meal_type?: string
+          notes?: string | null
+          protein?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -53,6 +164,128 @@ export type Database = {
           points?: number
           preferences?: Json | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_ai_preferences: {
+        Row: {
+          allergies: string[] | null
+          calorie_goal: number | null
+          carb_goal: number | null
+          cooking_time_preference: string | null
+          created_at: string | null
+          dietary_restrictions: string[] | null
+          disliked_ingredients: string[] | null
+          fat_goal: number | null
+          favorite_cuisines: string[] | null
+          id: string
+          meal_complexity: string | null
+          protein_goal: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allergies?: string[] | null
+          calorie_goal?: number | null
+          carb_goal?: number | null
+          cooking_time_preference?: string | null
+          created_at?: string | null
+          dietary_restrictions?: string[] | null
+          disliked_ingredients?: string[] | null
+          fat_goal?: number | null
+          favorite_cuisines?: string[] | null
+          id?: string
+          meal_complexity?: string | null
+          protein_goal?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allergies?: string[] | null
+          calorie_goal?: number | null
+          carb_goal?: number | null
+          cooking_time_preference?: string | null
+          created_at?: string | null
+          dietary_restrictions?: string[] | null
+          disliked_ingredients?: string[] | null
+          fat_goal?: number | null
+          favorite_cuisines?: string[] | null
+          id?: string
+          meal_complexity?: string | null
+          protein_goal?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          arm_circumference: number | null
+          body_fat_percentage: number | null
+          chest_circumference: number | null
+          created_at: string | null
+          id: string
+          muscle_mass: number | null
+          notes: string | null
+          recorded_date: string
+          user_id: string
+          waist_circumference: number | null
+          weight: number | null
+        }
+        Insert: {
+          arm_circumference?: number | null
+          body_fat_percentage?: number | null
+          chest_circumference?: number | null
+          created_at?: string | null
+          id?: string
+          muscle_mass?: number | null
+          notes?: string | null
+          recorded_date?: string
+          user_id: string
+          waist_circumference?: number | null
+          weight?: number | null
+        }
+        Update: {
+          arm_circumference?: number | null
+          body_fat_percentage?: number | null
+          chest_circumference?: number | null
+          created_at?: string | null
+          id?: string
+          muscle_mass?: number | null
+          notes?: string | null
+          recorded_date?: string
+          user_id?: string
+          waist_circumference?: number | null
+          weight?: number | null
         }
         Relationships: []
       }
