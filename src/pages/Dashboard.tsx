@@ -28,6 +28,10 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import RecipeAssistant from "@/components/RecipeAssistant";
+import { AchievementsPanel } from "@/components/dashboard/AchievementsPanel";
+import { DailyChallenges } from "@/components/dashboard/DailyChallenges";
+import { ProgressChart } from "@/components/dashboard/ProgressChart";
+import { ProgressTracker } from "@/components/dashboard/ProgressTracker";
 
 interface UserProfile {
   id: string;
@@ -62,6 +66,8 @@ const Dashboard = () => {
   const [recipes, setRecipes] = useState<RecipesByDay | Recipe[]>({});
   const [weeklyMenu, setWeeklyMenu] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [totalMealsLogged, setTotalMealsLogged] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   console.log('Dashboard render - user:', user, 'loading:', loading);
 
@@ -77,7 +83,8 @@ const Dashboard = () => {
       await Promise.all([
         fetchProfile(),
         fetchRecipes(),
-        fetchWeeklyMenu()
+        fetchWeeklyMenu(),
+        fetchMealLogsCount()
       ]);
     } catch (error: any) {
       console.error('Error initializing user data:', error);
@@ -88,6 +95,20 @@ const Dashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMealLogsCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('meal_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      setTotalMealsLogged(count || 0);
+    } catch (error) {
+      console.error('Error fetching meal logs count:', error);
     }
   };
 
@@ -495,10 +516,12 @@ const Dashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="menu" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="menu">Cardápio</TabsTrigger>
+                <TabsTrigger value="progress">Progresso</TabsTrigger>
+                <TabsTrigger value="challenges">Desafios</TabsTrigger>
                 <TabsTrigger value="recipes">Receitas</TabsTrigger>
-                <TabsTrigger value="shopping">Lista de Compras</TabsTrigger>
+                <TabsTrigger value="shopping">Compras</TabsTrigger>
               </TabsList>
 
               <TabsContent value="menu" className="space-y-4">
@@ -549,6 +572,33 @@ const Dashboard = () => {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="progress" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <ProgressTracker 
+                    userId={user.id} 
+                    onProgressAdded={() => setRefreshKey(prev => prev + 1)} 
+                  />
+                  <ProgressChart key={refreshKey} userId={user.id} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="challenges" className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <DailyChallenges 
+                    userId={user.id} 
+                    onPointsEarned={() => {
+                      fetchProfile();
+                      setRefreshKey(prev => prev + 1);
+                    }} 
+                  />
+                  <AchievementsPanel 
+                    userId={user.id}
+                    currentStreak={profile?.current_streak || 0}
+                    totalMealsLogged={totalMealsLogged}
+                  />
+                </div>
               </TabsContent>
 
               <TabsContent value="recipes" className="space-y-4">
