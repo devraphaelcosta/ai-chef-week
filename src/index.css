@@ -8,49 +8,49 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Light mode - Premium Liquid Glass */
-    --brand-heading: 260 80% 55%;
-    --background: 240 20% 99%;
-    --foreground: 240 10% 15%;
+    /* Light mode - Neutral Premium */
+    --brand-heading: 220 10% 20%;
+    --background: 0 0% 98%;
+    --foreground: 220 10% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 15%;
+    --card-foreground: 220 10% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 15%;
+    --popover-foreground: 220 10% 15%;
 
-    --primary: 260 95% 65%;
+    --primary: 220 15% 25%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 270 90% 75%;
+    --primary-glow: 220 15% 40%;
 
-    --secondary: 240 30% 98%;
-    --secondary-foreground: 240 10% 20%;
+    --secondary: 220 10% 96%;
+    --secondary-foreground: 220 10% 20%;
 
-    --muted: 240 20% 96%;
-    --muted-foreground: 240 8% 50%;
+    --muted: 220 10% 94%;
+    --muted-foreground: 220 8% 45%;
 
-    --accent: 280 85% 65%;
+    --accent: 142 76% 36%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 15% 92%;
-    --input: 240 15% 95%;
-    --ring: 260 95% 65%;
+    --border: 220 10% 90%;
+    --input: 220 10% 92%;
+    --ring: 220 15% 25%;
 
-    /* Premium Liquid Glass Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(260, 95%, 65%) 0%, hsl(280, 85%, 70%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(240, 100%, 99%) 0%, hsl(260, 60%, 96%) 50%, hsl(280, 50%, 98%) 100%);
-    --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
-    --gradient-premium: linear-gradient(135deg, hsl(260, 95%, 65%) 0%, hsl(270, 90%, 70%) 50%, hsl(280, 85%, 75%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%);
+    /* Neutral Gradients with Subtle Accents */
+    --gradient-primary: linear-gradient(135deg, hsl(220, 15%, 25%) 0%, hsl(220, 15%, 35%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0, 0%, 99%) 0%, hsl(220, 15%, 97%) 100%);
+    --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%);
+    --gradient-premium: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(142, 76%, 42%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.85) 100%);
     
-    /* Premium Shadows - Liquid Glass Style */
-    --shadow-premium: 0 20px 60px -15px rgba(139, 92, 246, 0.3), 0 8px 25px -8px rgba(139, 92, 246, 0.15);
-    --shadow-glow: 0 0 50px rgba(167, 139, 250, 0.4), 0 0 25px rgba(167, 139, 250, 0.2);
-    --shadow-card: 0 8px 32px rgba(139, 92, 246, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05);
-    --shadow-glass: 0 8px 32px 0 rgba(139, 92, 246, 0.15);
+    /* Subtle Shadows */
+    --shadow-premium: 0 20px 50px -15px rgba(0, 0, 0, 0.08), 0 8px 20px -8px rgba(0, 0, 0, 0.04);
+    --shadow-glow: 0 0 40px rgba(34, 197, 94, 0.15), 0 0 20px rgba(34, 197, 94, 0.08);
+    --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
 
     --radius: 1rem;
 
@@ -72,50 +72,50 @@ All colors MUST be HSL.
   }
 
 .dark {
-    /* Dark mode - Premium Liquid Glass */
-    --brand-heading: 270 90% 75%;
-    --background: 240 15% 10%;
-    --foreground: 240 10% 95%;
+    /* Dark mode - Neutral Premium */
+    --brand-heading: 220 10% 85%;
+    --background: 220 15% 8%;
+    --foreground: 220 10% 92%;
 
-    --card: 240 20% 12%;
-    --card-foreground: 240 10% 95%;
+    --card: 220 15% 10%;
+    --card-foreground: 220 10% 92%;
 
-    --popover: 240 20% 12%;
-    --popover-foreground: 240 10% 95%;
+    --popover: 220 15% 10%;
+    --popover-foreground: 220 10% 92%;
 
-    --primary: 260 95% 70%;
-    --primary-foreground: 240 15% 10%;
+    --primary: 220 15% 85%;
+    --primary-foreground: 220 15% 8%;
 
-    --secondary: 240 15% 18%;
-    --secondary-foreground: 240 10% 95%;
+    --secondary: 220 12% 15%;
+    --secondary-foreground: 220 10% 92%;
 
-    --muted: 240 15% 18%;
-    --muted-foreground: 240 8% 60%;
+    --muted: 220 12% 15%;
+    --muted-foreground: 220 8% 55%;
 
-    --accent: 280 85% 70%;
-    --accent-foreground: 240 15% 10%;
+    --accent: 142 76% 42%;
+    --accent-foreground: 220 15% 8%;
 
     --destructive: 0 70% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 15% 22%;
-    --input: 240 15% 20%;
-    --ring: 260 95% 70%;
+    --border: 220 12% 18%;
+    --input: 220 12% 16%;
+    --ring: 220 15% 85%;
     
-    --sidebar-background: 240 15% 12%;
-    --sidebar-foreground: 240 10% 95%;
-    --sidebar-primary: 260 95% 70%;
-    --sidebar-primary-foreground: 240 15% 10%;
-    --sidebar-accent: 240 15% 18%;
-    --sidebar-accent-foreground: 240 10% 95%;
-    --sidebar-border: 240 15% 22%;
-    --sidebar-ring: 260 95% 70%;
+    --sidebar-background: 220 15% 10%;
+    --sidebar-foreground: 220 10% 92%;
+    --sidebar-primary: 220 15% 85%;
+    --sidebar-primary-foreground: 220 15% 8%;
+    --sidebar-accent: 220 12% 15%;
+    --sidebar-accent-foreground: 220 10% 92%;
+    --sidebar-border: 220 12% 18%;
+    --sidebar-ring: 220 15% 85%;
 
-    --gradient-card: linear-gradient(145deg, rgba(30, 27, 75, 0.9) 0%, rgba(30, 27, 75, 0.6) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(30, 27, 75, 0.7) 100%);
-    --shadow-premium: 0 20px 60px -15px rgba(167, 139, 250, 0.4), 0 8px 25px -8px rgba(167, 139, 250, 0.2);
-    --shadow-glow: 0 0 50px rgba(167, 139, 250, 0.5), 0 0 25px rgba(167, 139, 250, 0.3);
-    --shadow-card: 0 8px 32px rgba(167, 139, 250, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+    --gradient-card: linear-gradient(145deg, rgba(26, 30, 36, 0.95) 0%, rgba(26, 30, 36, 0.7) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(26, 30, 36, 0.98) 0%, rgba(26, 30, 36, 0.85) 100%);
+    --shadow-premium: 0 20px 50px -15px rgba(0, 0, 0, 0.3), 0 8px 20px -8px rgba(0, 0, 0, 0.2);
+    --shadow-glow: 0 0 40px rgba(34, 197, 94, 0.2), 0 0 20px rgba(34, 197, 94, 0.1);
+    --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.1);
   }
 }
 

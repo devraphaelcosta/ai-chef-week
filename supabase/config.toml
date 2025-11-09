@@ -1,1 +1,7 @@
 project_id = "yjnmvpppnsbbemlrntwy"
+
+[functions.generate-recipe]
+verify_jwt = false
+
+[functions.generate-weekly-menu]
+verify_jwt = false
