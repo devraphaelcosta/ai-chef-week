@@ -73,12 +73,14 @@ export default {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-hero': 'var(--gradient-hero)',
 				'gradient-card': 'var(--gradient-card)',
-				'gradient-premium': 'var(--gradient-premium)'
+				'gradient-premium': 'var(--gradient-premium)',
+				'gradient-glass': 'var(--gradient-glass)'
 			},
 			boxShadow: {
 				'premium': 'var(--shadow-premium)',
 				'glow': 'var(--shadow-glow)',
-				'card': 'var(--shadow-card)'
+				'card': 'var(--shadow-card)',
+				'glass': 'var(--shadow-glass)'
 			},
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif']
@@ -103,7 +105,8 @@ export default {
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 6s ease-in-out infinite'
 			}
 		}
 	},
